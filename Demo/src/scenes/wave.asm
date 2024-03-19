@@ -1,4 +1,4 @@
-; Wave Demo Instructions
+/* Wave Demo Instructions */
 
 SECTION "Wave Demo", ROM0
 

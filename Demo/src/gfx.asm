@@ -2,17 +2,17 @@
 SECTION "GFX Container", ROM0
 
 FontTiles:
-INCLUDE "gfx/font.bin"
+    incbin "gfx/font.bin"
 FontTilesEnd:
 
 SmileSprite:
-INCBIN "gfx/sprite_face.2bpp"
+    incbin "gfx/sprite_face.2bpp"
 SmileSpriteEnd:
 
 ParallaxTiles:
-INCBIN "gfx/parallax.2bpp"
+    incbin "gfx/parallax.2bpp"
 ParallaxTilesEnd:
 
 ParallaxTilemap:
-INCBIN "gfx/parallax.tilemap"
+    incbin "gfx/parallax.tilemap"
 ParallaxTilemapEnd:

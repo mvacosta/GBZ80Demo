@@ -1,4 +1,5 @@
 /* WRAM Values : $C000 - $DFFF */
+
 SECTION "WRAM", WRAM0[$C000]
 
 WRAMStart:

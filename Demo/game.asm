@@ -1,19 +1,17 @@
 /* Helpers */
-INCLUDE "inc/hardware.inc"
-INCLUDE "inc/macros.inc"
-INCLUDE "inc/constants.inc"
+include "include.inc"
 
 /* ASM */
-INCLUDE "src/wram.asm"
-;INCLUDE "src/rst.asm"
-INCLUDE "src/interrupts.asm"
-INCLUDE "src/routines.asm"
-;INCLUDE "src/scenes/sprites.asm"
-INCLUDE "src/scenes/parallax.asm"
-;INCLUDE "src/scenes/wave.asm"
+include "src/wram.asm"
+;include "src/rst.asm"
+include "src/interrupts.asm"
+include "src/routines.asm"
+;include "src/scenes/sprites.asm"
+include "src/scenes/parallax.asm"
+;include "src/scenes/wave.asm"
 
 /* Data */
-INCLUDE "src/gfx.asm"
+include "src/gfx.asm"
 
 /* ROM Header */
 SECTION "Header", ROM0[$0100]

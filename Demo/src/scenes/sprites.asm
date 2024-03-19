@@ -1,4 +1,4 @@
-; Sprite Demo Instructions
+/* Sprite Demo Instructions */
 
 SECTION "Sprites Demo", ROM0
     

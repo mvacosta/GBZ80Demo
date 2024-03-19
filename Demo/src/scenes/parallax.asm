@@ -1,4 +1,4 @@
-; Parallax Demo Instructions
+/* Parallax Demo Instructions */
 
 SECTION "Parallax Demo", ROM0
 

@@ -2,6 +2,7 @@
 *.d
 
 # Object files
+*.gb
 *.o
 *.ko
 *.obj
@@ -10,6 +11,7 @@
 # Linker output
 *.ilk
 *.map
+*.sym
 *.exp
 
 # Precompiled Headers

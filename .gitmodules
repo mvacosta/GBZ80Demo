@@ -1,0 +1,3 @@
+[submodule "Demo/inc/hardware.inc"]
+	path = Demo/inc/hardware.inc
+	url = https://github.com/gbdev/hardware.inc

@@ -2,7 +2,7 @@
 SECTION "GFX Container", ROM0
 
 FontTiles:
-    incbin "gfx/font.bin"
+    include "gfx/font.bin"
 FontTilesEnd:
 
 SmileSprite:

@@ -1,11 +1,17 @@
 /* Constants for easier address reading */
 
 /* VRAM Constants */
-def vChars0 equ $8000
-def vChars1 equ $8800
-def vChars2 equ $9000
-def vScreenMap equ $9800
-def vWindowMap equ $9C00
+def vTileSize8x8  equ 16
+def vTileSize8x16 equ vTileSize8x8 * 2
+def vSpriteSize   equ 4
+def vSpriteCount  equ 40
+def vSpriteLength equ vSpriteCount * vSpriteSize ; 40 sprites with 4 bytes each
+
+def vTilesBlock0 equ $8000
+def vTilesBlock1 equ $8800
+def vTilesBlock2 equ $9000
+def vScreenMap   equ $9800
+def vWindowMap   equ $9C00
 
 /* Input Constants */
 ; These corrospond to the WRAM addresses for wControllerInput
@@ -26,21 +32,10 @@ def iBButton      equ %00000010
 def iAButton      equ %00000001
 
 /* Game Constants */
-def _StackSize         equ $40   ; 64 bytes for Stack
+def _StackSize         equ 64    ; 64 bytes for Stack
 def _60FrameCount      equ 60    ; For counting to 60 frames
 def _VRAMSceneOffset   equ $8600 ; VRAM starting from here is free
 def _VRAMTilemapOffset equ $60   ; When using Tilemaps, this offset is after the font and smile sprite
-
-/* Scene Constants */
-def _Scene0Sprites  equ %00000001
-def _Scene1Parallax equ %00000010
-def _Scene2Wave     equ %00000100
-
-def _SceneTransitionIn   equ %00001000
-def _SceneTransitionOut  equ %00010000
-def _SceneTransitionInit equ %00100000
-
-def _LCDSCheck equ %10000000
 
 /* Sprite Scene Constants */
 def _Sprite_Y_TopScreenBound    equ 16

@@ -7,7 +7,7 @@ WRAMStart:
     wTotalFrames:: dw ; Count total amount of frames
     wTotalSeconds:: dw ; Count every 60 frames
     wControllerInput:: dl ; Store controller input
-    wSequentialOffset:: db ; Used to offset data being sequentially filled
+    wCopyOffset:: db ; Used to offset data being sequentially filled
     wSceneAttributes:: db ; Determines current scene & if transitioning
     wSpriteTest:: db ; ???
     wParallaxScrollArray:: ds 5 * 7 ; ParallaxData is stored here

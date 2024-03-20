@@ -24,6 +24,9 @@ SECTION "Header", ROM0[$0100]
 /* Game ROM Instructions */
 SECTION "Game", ROM0[$0150]
 
+/*
+    Game entry point - calling this should reset everything
+*/
 ResetAll::
     xor a ; xor a is the same as 'ld a, 0', except it takes one less byte & cycle
     ldh [rNR52], a ; Disable sound
@@ -33,31 +36,31 @@ ResetAll::
     ld l, 0
     ld de, WRAMStart
     ld bc, WRAMEnd - WRAMStart
-    call ByteFill
+    call MemSet
 
     ; Clear garbage in OAMRAM
     ld l, 0
     ld de, _OAMRAM
-    ld bc, 40 * 4 ; 40 sprites with 4 bytes each
-    call ByteFill
+    ld bc, vSpriteLength
+    call MemSet
 
     ; Clear screen to remove copyrighted logo
     ld l, 0
     ld de, vScreenMap
     ld bc, vWindowMap - vScreenMap
-    call ByteFill
+    call MemSet
 
     ; Load our tiles into VRAM
     ld hl, FontTiles
-    ld de, vChars0
+    ld de, vTilesBlock0
     ld bc, FontTilesEnd - FontTiles
-    call SequentialFill
+    call MemCopy
 
     ; Smile Sprite can stay in VRAM
     ld hl, SmileSprite
-    ld de, _VRAMSceneOffset - 1
+    ld de, _VRAMSceneOffset - vTileSize8x8
     ld bc, SmileSpriteEnd - SmileSprite
-    call SequentialFill
+    call MemCopy
 
     ; Set up palettes
     ld a, %11100100
@@ -97,7 +100,6 @@ MainLoop:
     ldh [rSTAT], a
     ei
     halt
-    nop
     di
     xor a
     ldh [rIE], a

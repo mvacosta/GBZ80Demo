@@ -1,13 +1,14 @@
-/* Parallax Demo Instructions */
+/* Parallax Demo Scene */
 
 SECTION "Parallax Demo", ROM0
 
-/* Parallax array data
-    0 - LYC Position
-    1 - Base Scrolling Speed (High)
-    2 - Base Scrolling Speed (Low)
-    2 - Scroll Current Value (High; loaded to SCX)
-    3 - Scroll Current Value (Low)
+/*
+    Array holding data for when to scroll the screen.
+        0 - LYC Position
+        1 - Base Scrolling Speed (High)
+        2 - Base Scrolling Speed (Low)
+        2 - Scroll Current Value (High; loaded to SCX)
+        3 - Scroll Current Value (Low)
 */
 ParallaxData:
     ; Skip LYC for Clouds (since it scrolls at 0)
@@ -39,22 +40,21 @@ ParallaxSceneInit:
     ld hl, ParallaxTiles
     ld de, _VRAMSceneOffset
     ld bc, ParallaxTilesEnd - ParallaxTiles
-    call SequentialFill
+    call MemCopy
 
     ; Load Parallax tilemap
     ld hl, ParallaxTilemap
     ld de, vScreenMap
     ld bc, ParallaxTilemapEnd - ParallaxTilemap
-    ld a, [wSequentialOffset]
-    add _VRAMTilemapOffset
-    ld [wSequentialOffset], a
-    call SequentialFill
+    ld a, _VRAMTilemapOffset
+    ld [wCopyOffset], a
+    call MemCopy
 
     ; Setup Parallax array data
     ld hl, ParallaxData
     ld de, wParallaxScrollArray
     ld bc, ParallaxData.end - ParallaxData
-    call SequentialFill
+    call MemCopy
 
     xor a
     ld [wParallaxSpeed], a
@@ -80,20 +80,18 @@ ParallaxSceneUpdate:
     ld a, [hl+]
     ldh [rLYC], a ; Set next line to interrupt
     ldh a, [rSTAT]
-    res STATB_MODE00, a
+    xor a
     set STATB_LYC, a
     ldh [rSTAT], a
     halt ; Line interrupt
-    nop
 
 .setupScroll ; For skipping the initial part of the loop for the clouds
     inc hl
     inc hl
-    res STATB_LYC, a
+    xor a
     set STATB_MODE00, a
     ldh [rSTAT], a
     halt ; H-Blank interrupt
-    nop
 
     ; Scroll ASAP
     ld a, [hl-]
@@ -123,9 +121,7 @@ ParallaxSceneUpdate:
 
     ; Clouds will always scroll at the same speed so check for that and skip getting multiplier
     ldh a, [rLY]
-    dec a
-    cp 2 ; rLY will have increased by this point
-    jr nc, .speedLoopStart
+    jrgq _Parallax_LYC_Interrupt_Mountains_1, .speedLoopStart
     ld a, 1
     jr .speedLoop
 
@@ -134,8 +130,7 @@ ParallaxSceneUpdate:
     ld a, [wParallaxSpeed]
 
 .speedLoop
-    cp 0
-    jr z, .speedLoopEnd
+    jreq 0, .speedLoopEnd
     add hl, bc
     dec a
     jr .speedLoop
@@ -148,20 +143,16 @@ ParallaxSceneUpdate:
     inc hl
     ld [hl], c
 
-
     ; Check if end of array
     inc hl
     ld a, [hl]
-    cp $FF
-    jp nz, .interruptLoop
+    jpnq $FF, .interruptLoop
 
     ; Clean-up
     di
     xor a
     ldh [rSTAT], a
     ldh [rLYC], a
-    ldh a, [rIE]
-    res IEB_STAT, a
     ldh [rIE], a
 
     ret
@@ -178,16 +169,14 @@ ParallaxSceneVBlank:
 
 .increaseSpeed ; Increase speed on pressing Right
     ld a, [wParallaxSpeed]
-    cp _Parallax_Scroll_Max_Speed
-    jr nc, ParallaxCleanUp
+    jrgq _Parallax_Scroll_Max_Speed, ParallaxCleanUp
     inc a
     ld [wParallaxSpeed], a
     jr ParallaxCleanUp
 
 .decreaseSpeed ; Decrease speed on pressing Left
     ld a, [wParallaxSpeed]
-    cp _Parallax_Scroll_Min_Speed
-    jr z, ParallaxCleanUp
+    jrlq _Parallax_Scroll_Min_Speed, ParallaxCleanUp
     dec a
     ld [wParallaxSpeed], a
 

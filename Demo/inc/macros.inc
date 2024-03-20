@@ -45,9 +45,9 @@ endm
 */
 macro jpgr
     cp \1
-    jr z, .isEqual
+    jr z, .eq\@
     jp nc, \2
-.isEqual
+.eq\@
 endm
 
 /*
@@ -103,9 +103,9 @@ endm
 */
 macro jrgr
     cp \1
-    jr z, .isEqual
+    jr z, .eq\@
     jr nc, \2
-.isEqual
+.eq\@
 endm
 
 /*
@@ -161,9 +161,9 @@ endm
 */
 macro cgr
     cp \1
-    jr z, .isEqual
+    jr z, .eq\@
     call nc, \2
-.isEqual
+.eq\@
 endm
 
 /*

@@ -1,13 +1,15 @@
-/* Reusable routines (some with parameters!) */
+/* Reusable Routines (some with parameters!) */
 
 SECTION "Routines", ROM0
 
-; Fill amount of memory with one byte of data
-; Parameters:
-; l - Byte to fill with
-; de - Address to fill data to
-; bc - Amount of addresses to fill up to
-ByteFill::
+/*
+    Fills block of memory with byte held in L.
+    Parameters:
+         L - Byte to set with
+        DE - Start address to set to
+        BC - Amount of addresses to set to
+*/
+MemSet::
     ld a, l
     ld [de], a
     dec bc
@@ -15,33 +17,20 @@ ByteFill::
     or b
     ret z
     inc de
-    jr ByteFill
+    jr MemSet
 
-; Fill amount of memory with one address of data
-; Parameters:
-; hl - Byte to fill with
-; de - Address to fill data to
-; bc - Amount of addresses to fill up to
-AddressFill::
-    ld a, [hl]
-    ld [de], a
-    dec bc
-    ld a, c ; Check if zero
-    or b
-    ret z
-    inc de
-    jr AddressFill
-
-; Copy data to memory sequentially, from one address to another
-; Parameters:
-; hl - Address to copy data from
-; de - Address to copy data to
-; bc - Amount of addresses to copy to
-; wSequentialOffset - Set to offset the Sequential Fill
-SequentialFill::
-    ld a, [hli]
+/*
+    Copies block of memory from HL into DE.
+    Parameters:
+        HL - Address to copy data from
+        DE - Address to copy data to
+        BC - Amount of addresses to copy to
+        wCopyOffset - Set to offset the Sequential Fill
+*/
+MemCopy::
+    ld a, [hl+]
     push hl
-    ld hl, wSequentialOffset
+    ld hl, wCopyOffset
     add a, [hl]
     pop hl
     ld [de], a
@@ -50,12 +39,10 @@ SequentialFill::
     or b
     jr z, .cleanUp
     inc de
-    jr SequentialFill
+    jr MemCopy
 .cleanUp
-    ld hl, wSequentialOffset ; Clear the Offset incase this routine is called without it being set
-    ld a, [hl]
     xor a
-    ld [hl], a
+    ld [wCopyOffset], a ; Clear the Offset incase this routine is called without it being set
     ret
 
 ; Turn on LCD using these attributes

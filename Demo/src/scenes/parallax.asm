@@ -84,6 +84,7 @@ ParallaxSceneUpdate:
     set STATB_LYC, a
     ldh [rSTAT], a
     halt ; Line interrupt
+    nop
 
 .setupScroll ; For skipping the initial part of the loop for the clouds
     inc hl
@@ -92,6 +93,7 @@ ParallaxSceneUpdate:
     set STATB_MODE00, a
     ldh [rSTAT], a
     halt ; H-Blank interrupt
+    nop
 
     ; Scroll ASAP
     ld a, [hl-]

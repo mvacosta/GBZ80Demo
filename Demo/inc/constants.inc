@@ -13,6 +13,12 @@ def vTilesBlock2 equ $9000
 def vScreenMap   equ $9800
 def vWindowMap   equ $9C00
 
+/* HRAM Constants */
+def hOAMDMARoutine     equ _HRAM
+def hOAMDMARoutineSize equ 10 ; Routine is 10 bytes
+def hStackTop          equ hOAMDMARoutine + hOAMDMARoutineSize
+def hStackBottom       equ $FFFE
+
 /* Input Constants */
 ; These corrospond to the WRAM addresses for wControllerInput
 rsset $C005

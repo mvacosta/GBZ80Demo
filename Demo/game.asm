@@ -70,17 +70,33 @@ ResetAll::
     ld a, %11011000
     ldh [rOBP1], a
 
-    ; TODO: Do this better
+    ; Copy OAM DMA transfer routine into HRAM
+    ld hl, OAMDMA
+    ld de, hOAMDMARoutine
+    ld bc, hOAMDMARoutineSize
+    call MemCopy
+
+    ; TODO: Need better way to init
     call ParallaxSceneInit
 
     call TurnOnLCD
-    ld sp, wStackBottom
+
+    ; Clear stack
+    xor a
+    ld hl, hStackTop
+    ld b, hStackTop - hStackBottom
+.stackLoop
+    ld [hl+], a
+    dec b
+    jr nz, .stackLoop
+    ld sp, hStackBottom
+    jr MainLoop.endOfFrame
 
 MainLoop:
     call FrameStep
     call PollInput
 
-    ; TODO: Check to see if scene is changing
+    ; TODO: Need to be able to change which scene is being called
     ; Go to the proper scene's Update
     call ParallaxSceneUpdate
 
@@ -100,6 +116,7 @@ MainLoop:
     ldh [rSTAT], a
     ei
     halt
+    nop
     di
     xor a
     ldh [rIE], a

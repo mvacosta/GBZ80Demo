@@ -45,6 +45,18 @@ MemCopy::
     ld [wCopyOffset], a ; Clear the Offset incase this routine is called without it being set
     ret
 
+/*
+    From gbdev.io/pandocs, a routine to copy into HRAM for the OAM DMA transfers
+*/
+OAMDMA::
+    ld a, HIGH(wSpriteOAMSource)
+    ldh [rDMA], a
+    ld a, vSpriteCount
+.wait ; Wait for 160 cycles to finish the transfer
+    dec a
+    jr nz, .wait
+    ret
+
 ; Turn on LCD using these attributes
 TurnOnLCD::
     ld a, LCDCF_ON | LCDCF_BG8000 | LCDCF_BG9800 | LCDCF_BGON | LCDCF_OBJ8 | LCDCF_OBJON

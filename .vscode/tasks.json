@@ -6,7 +6,8 @@
         {
             "label": "Build ROM",
             "type": "shell",
-            "command": "${workspaceFolder}/make.sh"
+            "windows": { "command": "${workspaceFolder}/make.bat" },
+            "osx": { "command": "${workspaceFolder}/make.sh" }
         }
     ]
 }

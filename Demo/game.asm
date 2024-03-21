@@ -111,14 +111,13 @@ MainLoop:
     ldh [rLYC], a
     set IEB_STAT, a
     ldh [rIE], a
-    res IEB_STAT, a
-    set STATB_LYC, a
+    xor IEF_STAT | STATF_LYC
     ldh [rSTAT], a
+    xor a
     ei
     halt
     nop
     di
-    xor a
     ldh [rIE], a
     ldh [rSTAT], a
     jr MainLoop

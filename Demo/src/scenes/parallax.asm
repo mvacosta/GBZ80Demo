@@ -56,6 +56,61 @@ ParallaxSceneInit:
     ld bc, ParallaxData.end - ParallaxData
     call MemCopy
 
+    ; Mini Tile Indices: 184 - 187 (1) | 188 - 191 (2) | 192 - 195 (3) | 196 - 199 (4)
+    ; Mini Map  Indices: 230, 231, 262, 263 (Left) | 246, 247, 278, 279 (Right)
+    ld a, 184
+    ld hl, vScreenMap+230
+    ld [hl], a
+    ld hl, vScreenMap+246
+    ld [hl], a
+    inc a
+    ld hl, vScreenMap+231
+    ld [hl], a
+    ld hl, vScreenMap+247
+    ld [hl], a
+    inc a
+    ld hl, vScreenMap+262
+    ld [hl], a
+    ld hl, vScreenMap+278
+    ld [hl], a
+    inc a
+    ld hl, vScreenMap+263
+    ld [hl], a
+    ld hl, vScreenMap+279
+    ld [hl], a
+
+    ; Big Map  Indices: 237 - 242 (Top, 6b), 268 - 275 (Bottom, 8b)
+    ; Big Tile Indices: 152 - 154 (T1) | 160 - 162 (T2) | 168 - 170 (T3) | 176 - 178 (T4)
+    ;                   155 - 159 (B1) | 163 - 167 (B2) | 171 - 175 (B3) | 179 - 183 (B4)
+    ld a, 152
+    ld hl, vScreenMap+237
+    ld [hl+], a
+    inc a
+    ld [hl+], a
+    ld [hl+], a
+    ld [hl+], a
+    ld [hl+], a
+    inc a
+    ld [hl], a
+    inc a
+    ld hl, vScreenMap+268
+    ld [hl+], a
+    inc a
+    ld [hl+], a
+    inc a
+    ld [hl+], a
+    dec a
+    ld [hl+], a
+    inc a
+    ld [hl+], a
+    dec a
+    ld [hl+], a
+    inc a
+    inc a
+    ld [hl+], a
+    inc a
+    ld [hl], a
+
     xor a
     ld [wParallaxSpeed], a
     call ParallaxCleanUp
@@ -79,7 +134,6 @@ ParallaxSceneUpdate:
     ; Set up interrupts to scroll in H-Blank
     ld a, [hl+]
     ldh [rLYC], a ; Set next line to interrupt
-    ldh a, [rSTAT]
     xor a
     set STATB_LYC, a
     ldh [rSTAT], a
@@ -89,8 +143,7 @@ ParallaxSceneUpdate:
 .setupScroll ; For skipping the initial part of the loop for the clouds
     inc hl
     inc hl
-    xor a
-    set STATB_MODE00, a
+    xor STATF_LYC | STATF_MODE00
     ldh [rSTAT], a
     halt ; H-Blank interrupt
     nop

@@ -71,3 +71,12 @@ def _Parallax_Lake_1_Base_Scroll      equ 60
 def _Parallax_Lake_2_Base_Scroll      equ 70
 def _Parallax_Lake_3_Base_Scroll      equ 80
 def _Parallax_Ground_Base_Scroll      equ 128
+
+; Waterfall Animation
+def _Parallax_Waterfall_Anim_Frame_Count equ 6
+def _Parallax_Mini_Waterfall_Min_Index   equ 184
+def _Parallax_Mini_Waterfall_Max_Index   equ 196
+def _Parallax_Mini_Waterfall_Anim_Offset equ 4
+def _Parallax_Big_Waterfall_Min_Index    equ 152
+def _Parallax_Big_Waterfall_Max_Index    equ 176
+def _Parallax_Big_Waterfall_Anim_Offset  equ 8

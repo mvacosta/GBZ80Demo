@@ -3,7 +3,7 @@
 SECTION "Parallax Demo", ROM0
 
 /*
-    Array holding data for when to scroll the screen.
+    Data for when to scroll the screen.
         0 - LYC Position
         1 - Base Scrolling Speed (High)
         2 - Base Scrolling Speed (Low)
@@ -32,7 +32,65 @@ ParallaxData:
     db _Parallax_LYC_Interrupt_Ground
     dw _Parallax_Ground_Base_Scroll
     dw _Parallax_Ground_Base_Scroll
-    db $FF ; Array terminator
+    db $FF ; Terminator
+.end
+
+/*
+    Data for animating the waterfalls.
+        0 - Sreen Map Index
+        1 - Tile Index
+*/
+WaterfallAnimData:
+    ; Left Mini Waterfall
+    dw vScreenMap+230
+    db _Parallax_Mini_Waterfall_Min_Index
+    dw vScreenMap+231
+    db _Parallax_Mini_Waterfall_Min_Index+1
+    dw vScreenMap+262
+    db _Parallax_Mini_Waterfall_Min_Index+2
+    dw vScreenMap+263
+    db _Parallax_Mini_Waterfall_Min_Index+3
+    ; Right Mini Waterfall
+    dw vScreenMap+246
+    db _Parallax_Mini_Waterfall_Min_Index
+    dw vScreenMap+247
+    db _Parallax_Mini_Waterfall_Min_Index+1
+    dw vScreenMap+278
+    db _Parallax_Mini_Waterfall_Min_Index+2
+    dw vScreenMap+279
+    db _Parallax_Mini_Waterfall_Min_Index+3
+    db $FF ; First terminator to know when to check for Big Waterfall
+    ; Big Waterfall (Top Tiles)
+    dw vScreenMap+237
+    db _Parallax_Big_Waterfall_Min_Index
+    dw vScreenMap+238
+    db _Parallax_Big_Waterfall_Min_Index+1
+    dw vScreenMap+239
+    db _Parallax_Big_Waterfall_Min_Index+1
+    dw vScreenMap+240
+    db _Parallax_Big_Waterfall_Min_Index+1
+    dw vScreenMap+241
+    db _Parallax_Big_Waterfall_Min_Index+1
+    dw vScreenMap+242
+    db _Parallax_Big_Waterfall_Min_Index+2
+    ; Big Waterfall (Bottom Tiles)
+    dw vScreenMap+268
+    db _Parallax_Big_Waterfall_Min_Index+3
+    dw vScreenMap+269
+    db _Parallax_Big_Waterfall_Min_Index+4
+    dw vScreenMap+270
+    db _Parallax_Big_Waterfall_Min_Index+5
+    dw vScreenMap+271
+    db _Parallax_Big_Waterfall_Min_Index+5
+    dw vScreenMap+272
+    db _Parallax_Big_Waterfall_Min_Index+5
+    dw vScreenMap+273
+    db _Parallax_Big_Waterfall_Min_Index+5
+    dw vScreenMap+274
+    db _Parallax_Big_Waterfall_Min_Index+6
+    dw vScreenMap+275
+    db _Parallax_Big_Waterfall_Min_Index+7
+    db $FF ; Second terminator
 .end
 
 ParallaxSceneInit:
@@ -42,7 +100,7 @@ ParallaxSceneInit:
     ld bc, ParallaxTilesEnd - ParallaxTiles
     call MemCopy
 
-    ; Load Parallax tilemap
+    ; Load parallax tilemap
     ld hl, ParallaxTilemap
     ld de, vScreenMap
     ld bc, ParallaxTilemapEnd - ParallaxTilemap
@@ -50,69 +108,32 @@ ParallaxSceneInit:
     ld [wCopyOffset], a
     call MemCopy
 
-    ; Setup Parallax array data
+    ; Setup parallax array with initial data
     ld hl, ParallaxData
     ld de, wParallaxScrollArray
     ld bc, ParallaxData.end - ParallaxData
     call MemCopy
 
-    ; Mini Tile Indices: 184 - 187 (1) | 188 - 191 (2) | 192 - 195 (3) | 196 - 199 (4)
-    ; Mini Map  Indices: 230, 231, 262, 263 (Left) | 246, 247, 278, 279 (Right)
-    ld a, 184
-    ld hl, vScreenMap+230
-    ld [hl], a
-    ld hl, vScreenMap+246
-    ld [hl], a
-    inc a
-    ld hl, vScreenMap+231
-    ld [hl], a
-    ld hl, vScreenMap+247
-    ld [hl], a
-    inc a
-    ld hl, vScreenMap+262
-    ld [hl], a
-    ld hl, vScreenMap+278
-    ld [hl], a
-    inc a
-    ld hl, vScreenMap+263
-    ld [hl], a
-    ld hl, vScreenMap+279
-    ld [hl], a
+    ; Setup waterfall first set of tiles
+    ld c, 2
+    ld hl, WaterfallAnimData
+    ld a, [hl+]
 
-    ; Big Map  Indices: 237 - 242 (Top, 6b), 268 - 275 (Bottom, 8b)
-    ; Big Tile Indices: 152 - 154 (T1) | 160 - 162 (T2) | 168 - 170 (T3) | 176 - 178 (T4)
-    ;                   155 - 159 (B1) | 163 - 167 (B2) | 171 - 175 (B3) | 179 - 183 (B4)
-    ld a, 152
-    ld hl, vScreenMap+237
-    ld [hl+], a
-    inc a
-    ld [hl+], a
-    ld [hl+], a
-    ld [hl+], a
-    ld [hl+], a
-    inc a
-    ld [hl], a
-    inc a
-    ld hl, vScreenMap+268
-    ld [hl+], a
-    inc a
-    ld [hl+], a
-    inc a
-    ld [hl+], a
-    dec a
-    ld [hl+], a
-    inc a
-    ld [hl+], a
-    dec a
-    ld [hl+], a
-    inc a
-    inc a
-    ld [hl+], a
-    inc a
-    ld [hl], a
+.waterfallLoop
+    ld e, a
+    ld a, [hl+]
+    ld d, a
+    ld a, [hl+]
+    ld [de], a
+    ld a, [hl+]
+    jrnq $FF, .waterfallLoop
+    ld a, [hl+]
+    dec c
+    jr nz, .waterfallLoop
 
     xor a
     ld [wParallaxSpeed], a
+    ld [wParallaxAnimCount], a
     call ParallaxCleanUp
     ret
 
@@ -212,8 +233,53 @@ ParallaxSceneUpdate:
 
     ret
 
+ParallaxSceneAnimateWaterfalls:
+    ld a, [wParallaxAnimCount]
+    inc a
+    jreq _Parallax_Waterfall_Anim_Frame_Count, .doAnim
+    ld [wParallaxAnimCount], a
+    ret
+
+.doAnim
+    ; Reset Animation Count
+    xor a
+    ld [wParallaxAnimCount], a
+
+    ; Get waterfall animation data
+    ld b, _Parallax_Mini_Waterfall_Anim_Offset
+    ld c, _Parallax_Mini_Waterfall_Max_Index
+    ld hl, WaterfallAnimData
+    ld a, [hl+]
+
+.animLoop
+    ld e, a
+    ld a, [hl+]
+    ld d, a
+    ld a, [de]
+    jrgq c, .reset
+    add a, b
+    inc hl
+    jr .noReset
+.reset
+    ld a, [hl+]
+.noReset
+    ld [de], a
+    ld a, [hl+]
+    jrnq $FF, .animLoop
+    ; WaterfallAnimData has 2 $FF terminators, make sure to use second half of data before leaving loop
+    ld a, c
+    cp _Parallax_Big_Waterfall_Max_Index
+    ret z
+    ld a, [hl+]
+    ld b, _Parallax_Big_Waterfall_Anim_Offset
+    ld c, _Parallax_Big_Waterfall_Max_Index
+    jr .animLoop
+
 ParallaxSceneVBlank:
-    ; We will increase scroll speed during VBlank
+    ; Animate waterfall tiles
+    call ParallaxSceneAnimateWaterfalls
+
+    ; Increase scroll speed
     ld a, [iInputButtonDown]
     and iRightButton
     jr nz, .increaseSpeed

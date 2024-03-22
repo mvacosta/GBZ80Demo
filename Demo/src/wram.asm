@@ -9,8 +9,9 @@ WRAMStart:
     wControllerInput:: dl ; Store controller input
     wCopyOffset:: db ; Used to offset data being sequentially filled
     wSceneAttributes:: db ; Determines current scene & if transitioning
-    wSpriteOAMSource:: ds vSpriteLength ; ???
+    wSpriteOAMSource:: ds vSpriteLength ; Source for OAM DMA transfer
     wSpriteTest:: db ; ???
     wParallaxScrollArray:: ds 5 * 7 ; ParallaxData is stored here
     wParallaxSpeed:: db ; How fast the scene is scrolling
+    wParallaxAnimCount:: db ; Count frames to animate waterfalls
 WRAMEnd:

@@ -1,18 +1,6 @@
 /* Helpers */
 include "include.inc"
 
-/* ASM */
-include "src/wram.asm"
-;include "src/rst.asm"
-include "src/interrupts.asm"
-include "src/routines.asm"
-;include "src/scenes/sprites.asm"
-include "src/scenes/parallax.asm"
-;include "src/scenes/wave.asm"
-
-/* Data */
-include "src/gfx.asm"
-
 /* ROM Header */
 SECTION "Header", ROM0[$0100]
     nop
@@ -37,6 +25,8 @@ ResetAll::
     ld de, WRAMStart
     ld bc, WRAMEnd - WRAMStart
     call MemSet
+
+    call InitHRAM ; Init HRAM
 
     ; Clear garbage in OAMRAM
     ld l, 0
@@ -70,12 +60,6 @@ ResetAll::
     ld a, %11011000
     ldh [rOBP1], a
 
-    ; Copy OAM DMA transfer routine into HRAM
-    ld hl, OAMDMA
-    ld de, hOAMDMARoutine
-    ld bc, hOAMDMARoutineSize
-    call MemCopy
-
     ; TODO: Need better way to init
     call ParallaxSceneInit
 
@@ -83,13 +67,13 @@ ResetAll::
 
     ; Clear stack
     xor a
-    ld hl, hStackTop
-    ld b, hStackTop - hStackBottom
+    ld hl, hStack
+    ld b, hStack - hStackStart
 .stackLoop
     ld [hl+], a
     dec b
     jr nz, .stackLoop
-    ld sp, hStackBottom
+    ld sp, hStackStart
     jr MainLoop.endOfFrame
 
 MainLoop:

@@ -28,7 +28,7 @@ SECTION "HRAM Executed Code", ROM0
     From gbdev.io/pandocs, a routine to copy into HRAM for the OAM DMA transfers
 */
 OAMDMATransferInstructions:
-    ld a, high(wSpriteOAMSource)
+    ld a, high(wOAMSource)
     ldh [rDMA], a
     ld a, vSpriteCount
 .wait ; Wait for 160 cycles to finish the transfer

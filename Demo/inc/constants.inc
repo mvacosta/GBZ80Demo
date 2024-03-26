@@ -14,13 +14,6 @@ def vScreenMap   equ $9800
 def vWindowMap   equ $9C00
 
 /* Input Constants */
-; These corrospond to the WRAM addresses for wControllerInput
-rsset $C005
-def iInputButtonLast rb ; The last frame's button input
-def iInputButtonDown rb ; When the button is initially pressed down
-def iInputButtonHold rb ; When the button is being held
-def iInputButtonUp   rb ; When the button is released
-
 ; Individual button checks
 def iDownButton   equ %10000000
 def iUpButton     equ %01000000
@@ -49,7 +42,8 @@ def _Parallax_Scroll_Min_Speed        equ 0
 def _Parallax_Scroll_Max_Speed        equ 6
 
 ; LCDC Interrupt Lines
-def _Parallax_LYC_Interrupt_Clouds      equ 0
+def _Parallax_LYC_Interrupt_Clouds_1    equ 0
+def _Parallax_LYC_Interrupt_Clouds_2    equ 23
 def _Parallax_LYC_Interrupt_Mountains_1 equ 31
 def _Parallax_LYC_Interrupt_Mountains_2 equ 53
 def _Parallax_LYC_Interrupt_Lake_1      equ 71
@@ -58,7 +52,8 @@ def _Parallax_LYC_Interrupt_Lake_3      equ 95
 def _Parallax_LYC_Interrupt_Ground      equ 119
 
 ; Different Speed Lines
-def _Parallax_Clouds_Base_Scroll      equ 200
+def _Parallax_Clouds_1_Base_Scroll    equ 200
+def _Parallax_Clouds_2_Base_Scroll    equ 100
 def _Parallax_Mountains_1_Base_Scroll equ 25
 def _Parallax_Mountains_2_Base_Scroll equ 35
 def _Parallax_Lake_1_Base_Scroll      equ 60

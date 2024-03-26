@@ -142,29 +142,29 @@ PollInput:: ; Get inputs pressed and store it into RAM
 
     ; Determine Down, Hold, and Up inputs
     ; b = Current Button Inputs, c = Last Button Inputs
-    ld a, [iInputButtonLast]
+    ld a, [wInputButtonLast]
     ld c, a
 
     ; Button Down
     cpl
     and b
-    ld [iInputButtonDown], a
+    ld [wInputButtonDown], a
 
     ; Button Held
     ld a, c
     and b
-    ld [iInputButtonHold], a
+    ld [wInputButtonHold], a
 
     ; Button Up
     ld a, c
     and b
     cpl
     and c
-    ld [iInputButtonUp], a
+    ld [wInputButtonUp], a
 
     ; Save the current inputs for next frame
     ld a, b
-    ld [iInputButtonLast], a
+    ld [wInputButtonLast], a
 
     ret
 

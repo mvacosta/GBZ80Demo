@@ -5,15 +5,18 @@ SECTION "Parallax Demo", ROM0
 /*
     Data for when to scroll the screen.
         0 - LYC Position
-        1 - Base Scrolling Speed (High)
-        2 - Base Scrolling Speed (Low)
-        2 - Scroll Current Value (High; loaded to SCX)
-        3 - Scroll Current Value (Low)
+        1 - Base Scrolling Speed (Lo)
+        2 - Base Scrolling Speed (Hi)
+        2 - Scroll Current Value (Lo; loaded to SCX)
+        3 - Scroll Current Value (Hi)
 */
 ParallaxData:
     ; Skip LYC for Clouds (since it scrolls at 0)
-    dw _Parallax_Clouds_Base_Scroll
-    dw _Parallax_Clouds_Base_Scroll
+    dw _Parallax_Clouds_1_Base_Scroll
+    dw _Parallax_Clouds_1_Base_Scroll
+    db _Parallax_LYC_Interrupt_Clouds_2
+    dw _Parallax_Clouds_2_Base_Scroll
+    dw _Parallax_Clouds_2_Base_Scroll
     db _Parallax_LYC_Interrupt_Mountains_1
     dw _Parallax_Mountains_1_Base_Scroll
     dw _Parallax_Mountains_1_Base_Scroll
@@ -93,6 +96,26 @@ WaterfallAnimData:
     db $FF ; Second terminator
 .end
 
+/*
+    Base OAM values for the Palm Tree sprite.
+*/
+PalmTreeSprite:
+    db                26, 8, 201, 0, 26, 16, 202, 0, 26, 24, 203, 0, 26, 32, 204, 0
+    db 34, 0, 205, 0, 34, 8, 206, 0, 34, 16, 207, 0, 34, 24, 208, 0, 34, 32, 209, 0
+    db 42, 0, 210, 0, 42, 8, 211, 0, 42, 16, 212, 0, 42, 24, 213, 0, 42, 32, 214, 0
+    db 50, 0, 215, 0, 50, 8, 216, 0, 50, 16, 217, 0, 50, 24, 218, 0,
+    db                               58, 16, 219, 0
+    db                               66, 16, 219, 0
+    db                               74, 16, 219, 0
+    db                               82, 16, 219, 0
+    db                               90, 16, 219, 0
+    db                               98, 16, 219, 0
+    db                              106, 16, 219, 0
+    db                              114, 16, 219, 0
+    db                              122, 16, 219, 0
+    db                              130, 16, 200, 0
+.end
+
 ParallaxSceneInit:
     ; Load parallax tiles into VRAM
     ld hl, ParallaxTiles
@@ -131,6 +154,13 @@ ParallaxSceneInit:
     dec c
     jr nz, .waterfallLoop
 
+    ; Display Palm Tree as sprite
+    ld hl, PalmTreeSprite
+    ld de, wOAMSource
+    ld bc, PalmTreeSprite.end - PalmTreeSprite
+    call MemCopy
+
+    ; Init WRAM values
     xor a
     ld [wParallaxSpeed], a
     ld [wParallaxAnimCount], a
@@ -175,10 +205,10 @@ ParallaxSceneUpdate:
 
     ; Array in HL looks like this from here:
     ; 0 - LYC
-    ; 1 - Speed (Hi)
-    ; 2 - Speed (Lo) <- Starting here
-    ; 3 - Pos (Hi)
-    ; 4 - Pos (Lo)
+    ; 1 - Speed (Lo)
+    ; 2 - Speed (Hi) <- Starting here
+    ; 3 - Pos (Lo)
+    ; 4 - Pos (Hi)
 
     ; Set up to be able to add 16-bit values (Add Speed to Pos)
     ld b, [hl]
@@ -231,6 +261,29 @@ ParallaxSceneUpdate:
     ldh [rLYC], a
     ldh [rIE], a
 
+    ; Scroll the Palm Tree using the Ground's scroll value
+    ld a, [wParallaxSpeed - 3] ; Should be the Ground's current X pos
+    ld b, a
+    ld c, (PalmTreeSprite.end - PalmTreeSprite) / vSpriteSize
+    ld hl, PalmTreeSprite
+    ld de, wOAMSource
+
+.palmLoop
+    inc hl ; Start of X positions
+    inc de
+    ld a, [hl+]
+    sub b
+    ld [de], a
+
+    inc hl
+    inc hl
+    inc de
+    inc de
+    inc de
+
+    dec c
+    jr nz, .palmLoop
+
     ret
 
 ParallaxSceneAnimateWaterfalls:
@@ -276,26 +329,29 @@ ParallaxSceneAnimateWaterfalls:
     jr .animLoop
 
 ParallaxSceneVBlank:
+    ; Update Palm Tree positions
+    call hOAMDMATransfer
+
     ; Animate waterfall tiles
     call ParallaxSceneAnimateWaterfalls
 
     ; Increase scroll speed
-    ld a, [iInputButtonDown]
+    ld a, [wInputButtonDown]
     and iRightButton
-    jr nz, .increaseSpeed
-    ld a, [iInputButtonDown]
+    jr nz, .increaseScrollRight
+    ld a, [wInputButtonDown]
     and iLeftButton
-    jr nz, .decreaseSpeed
+    jr nz, .increaseScrollLeft
     jr ParallaxCleanUp
 
-.increaseSpeed ; Increase speed on pressing Right
+.increaseScrollRight ; Increase scroll speed to the right
     ld a, [wParallaxSpeed]
     jrgq _Parallax_Scroll_Max_Speed, ParallaxCleanUp
     inc a
     ld [wParallaxSpeed], a
     jr ParallaxCleanUp
 
-.decreaseSpeed ; Decrease speed on pressing Left
+.increaseScrollLeft ; Increase scroll speed to the left
     ld a, [wParallaxSpeed]
     jrlq _Parallax_Scroll_Min_Speed, ParallaxCleanUp
     dec a

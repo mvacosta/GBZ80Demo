@@ -3,11 +3,11 @@
 SECTION "Routines", ROM0
 
 /*
-    Fills block of memory with byte held in L.
+    Fills block of memory with byte held in l.
     Parameters:
-         L - Byte to set with
-        DE - Start address to set to
-        BC - Amount of addresses to set to
+         l - Byte to set with
+        de - Start address to set to
+        bc - Amount of addresses to set to
 */
 MemSet::
     ld a, l
@@ -22,9 +22,9 @@ MemSet::
 /*
     Copies block of memory from HL into DE.
     Parameters:
-        HL - Address to copy data from
-        DE - Address to copy data to
-        BC - Amount of addresses to copy to
+        hl - Address to copy data from
+        de - Address to copy data to
+        bc - Amount of addresses to copy to
         wCopyOffset - Set to offset the Sequential Fill
 */
 MemCopy::
@@ -45,13 +45,13 @@ MemCopy::
     ld [wCopyOffset], a ; Clear the Offset incase this routine is called without it being set
     ret
 
-; Turn on LCD using these attributes
+/* Turn on LCD using these attributes */
 TurnOnLCD::
     ld a, LCDCF_ON | LCDCF_BG8000 | LCDCF_BG9800 | LCDCF_BGON | LCDCF_OBJ8 | LCDCF_OBJON
     ldh [rLCDC], a
     ret
 
-; Turn off the LCD in order to write to VRAM
+/* Turn off the LCD in order to write to VRAM */
 TurnOffLCD::
     ldh a, [rLCDC]
     rlca ; LCD On/Off bit is the 7th bit
@@ -63,7 +63,7 @@ TurnOffLCD::
     ldh [rLCDC], a ; Turn off LCD
     ret
 
-; Wait for the LCD control to enter VBlank via interrupt
+/* Wait for the LCD control to enter VBlank via interrupt */
 WaitForVBlank::
     ei
     xor a
@@ -76,43 +76,68 @@ WaitForVBlank::
     di
     ret
 
-; Count each frame and increment total frames and "seconds"
+/*
+    Set up the dynamic Update call.
+    Parameters:
+        de - Address used in the dynamic jump
+*/
+SetUpdateCall::
+    ld hl, hUpdateCall+1
+    ld [hl], e
+    inc hl
+    ld [hl], d
+    ret
+
+/*
+    Set up the dynamic VBlank call.
+    Parameters:
+        de - Address used in the dynamic jump
+*/
+SetVBlankCall::
+    ld hl, hVBlankCall+1
+    ld [hl], e
+    inc hl
+    ld [hl], d
+    ret
+
+
+/* Count each frame and increment total frames and "seconds" */
 FrameStep::
-    ld a, [wTotalFrames]
+    ldh a, [hTotalFrames]
     inc a
-    ld [wTotalFrames], a
+    ldh [hTotalFrames], a
     cp 0
     jr nz, .secondsCheck
-    ld a, [wTotalFrames + 1]
+    ldh a, [hTotalFrames + 1]
     inc a
-    ld [wTotalFrames + 1], a
+    ldh [hTotalFrames + 1], a
 
 .secondsCheck
-    ld a, [wFrameCounter]
+    ldh a, [hFrameCounter]
     inc a
     cp _60FrameCount
     jr nc, .addSecond
 
 .saveCount
-    ld [wFrameCounter], a
+    ldh [hFrameCounter], a
     ret
 
 .addSecond
-    ld a, [wTotalSeconds]
+    ldh a, [hTotalSeconds]
     inc a
-    ld [wTotalSeconds], a
+    ldh [hTotalSeconds], a
     cp 0
     jr nz, .resetCount
-    ld a, [wTotalSeconds + 1]
+    ldh a, [hTotalSeconds + 1]
     inc a
-    ld [wTotalSeconds + 1], a
+    ldh [hTotalSeconds + 1], a
 
 .resetCount
     xor a ; Reset Counter; Every 0 is ~1 second
     jr .saveCount
 
-; Read inputs and put them into wControllerInput
-PollInput:: ; Get inputs pressed and store it into RAM
+/* Read inputs and put them into the four HRAM input variables. */
+PollInput::
     ld a, P1F_5 ; %00100000; checking to see the status of the D-Pad
     ldh [rP1], a
 
@@ -142,32 +167,32 @@ PollInput:: ; Get inputs pressed and store it into RAM
 
     ; Determine Down, Hold, and Up inputs
     ; b = Current Button Inputs, c = Last Button Inputs
-    ld a, [wInputButtonLast]
+    ldh a, [hInputButtonLast]
     ld c, a
 
     ; Button Down
     cpl
     and b
-    ld [wInputButtonDown], a
+    ldh [hInputButtonDown], a
 
     ; Button Held
     ld a, c
     and b
-    ld [wInputButtonHold], a
+    ldh [hInputButtonHold], a
 
     ; Button Up
     ld a, c
     and b
     cpl
     and c
-    ld [wInputButtonUp], a
+    ldh [hInputButtonUp], a
 
     ; Save the current inputs for next frame
     ld a, b
-    ld [wInputButtonLast], a
+    ldh [hInputButtonLast], a
 
     ret
 
-; Returns with A containing a random number between 0 - 255
+; Returns with A containing a random number between 0 - 255 */
 RNG::
     ret

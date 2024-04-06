@@ -25,7 +25,6 @@ def iBButton      equ %00000010
 def iAButton      equ %00000001
 
 /* Game Constants */
-def _StackSize         equ 64    ; 64 bytes for Stack
 def _60FrameCount      equ 60    ; For counting to 60 frames
 def _VRAMSceneOffset   equ $8600 ; VRAM starting from here is free
 def _VRAMTilemapOffset equ $60   ; When using Tilemaps, this offset is after the font and smile sprite

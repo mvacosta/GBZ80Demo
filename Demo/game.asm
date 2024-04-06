@@ -60,9 +60,7 @@ ResetAll::
     ld a, %11011000
     ldh [rOBP1], a
 
-    ; TODO: Need better way to init
     call ParallaxSceneInit
-
     call TurnOnLCD
 
     ; Clear stack
@@ -80,14 +78,11 @@ MainLoop:
     call FrameStep
     call PollInput
 
-    ; TODO: Need to be able to change which scene is being called
-    ; Go to the proper scene's Update
-    call ParallaxSceneUpdate
+    call hUpdateCall
 
     call WaitForVBlank
 
-    ; Go to the proper scene's VBlank
-    call ParallaxSceneVBlank
+    call hVBlankCall
 
 ; Start waiting for the top of the frame
 .endOfFrame

@@ -156,7 +156,7 @@ ParallaxSceneInit:
 
     ; Display Palm Tree as sprite
     ld hl, PalmTreeSprite
-    ld de, wOAMSource
+    ld de, wShadowOAM
     ld bc, PalmTreeSprite.end - PalmTreeSprite
     call MemCopy
 
@@ -165,6 +165,12 @@ ParallaxSceneInit:
     ld [wParallaxSpeed], a
     ld [wParallaxAnimCount], a
     call ParallaxCleanUp
+
+    ; Setup Update & VBlank
+    ld de, ParallaxSceneUpdate
+    call SetUpdateCall
+    ld de, ParallaxSceneVBlank
+    call SetVBlankCall
     ret
 
 ParallaxSceneUpdate:
@@ -266,7 +272,7 @@ ParallaxSceneUpdate:
     ld b, a
     ld c, (PalmTreeSprite.end - PalmTreeSprite) / vSpriteSize
     ld hl, PalmTreeSprite
-    ld de, wOAMSource
+    ld de, wShadowOAM
 
 .palmLoop
     inc hl ; Start of X positions
@@ -336,10 +342,10 @@ ParallaxSceneVBlank:
     call ParallaxSceneAnimateWaterfalls
 
     ; Increase scroll speed
-    ld a, [wInputButtonDown]
+    ld a, [hInputButtonDown]
     and iRightButton
     jr nz, .increaseScrollRight
-    ld a, [wInputButtonDown]
+    ld a, [hInputButtonDown]
     and iLeftButton
     jr nz, .increaseScrollLeft
     jr ParallaxCleanUp

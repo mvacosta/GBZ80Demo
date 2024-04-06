@@ -44,7 +44,7 @@ HRAMStart:
     hInputButtonUp::   db ; Input that has been released this frame
 
     hPadHRAM:: ds 5  ; Just pad out the rest of $FF80; might use it in the future
-    hScratch:: ds 16 ; 16 bytes used as scratch RAM; can be unionized if ended up being used a lot
+    hScratch:: ds 16 ; 16 bytes used as scratch RAM; C# constants above refer to this region
 
     union ; Instructions will start & live in this section; it is unionized for easier labelling
         hASM:: ds 29
@@ -93,7 +93,7 @@ InitHRAM::
     ld bc, OAMDMATransferInstructions.end - OAMDMATransferInstructions
     call MemCopy
 
-    ; Set up the dynamic Update and VBlank calls as well as the Emergency Reset
+    ; Set up the dynamic Update and VBlank calls (and the Emergency Reset)
     ld a, $C3 ; jp instruction
     ld hl, hUpdateCall
     ld [hl], a

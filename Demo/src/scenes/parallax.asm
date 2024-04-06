@@ -128,7 +128,7 @@ ParallaxSceneInit:
     ld de, vScreenMap
     ld bc, ParallaxTilemapEnd - ParallaxTilemap
     ld a, _VRAMTilemapOffset
-    ld [wCopyOffset], a
+    ldh [C0], a
     call MemCopy
 
     ; Setup parallax array with initial data
@@ -231,7 +231,7 @@ ParallaxSceneUpdate:
     pop hl ; Swap HL and BC for the loop below to work properly
     pop bc
 
-    ; Clouds will always scroll at the same speed so check for that and skip getting multiplier
+    ; Clouds will always scroll at the same speed
     ldh a, [rLY]
     jrgq _Parallax_LYC_Interrupt_Mountains_1, .speedLoopStart
     ld a, 1
@@ -342,10 +342,10 @@ ParallaxSceneVBlank:
     call ParallaxSceneAnimateWaterfalls
 
     ; Increase scroll speed
-    ld a, [hInputButtonDown]
+    ldh a, [hInputButtonDown]
     and iRightButton
     jr nz, .increaseScrollRight
-    ld a, [hInputButtonDown]
+    ldh a, [hInputButtonDown]
     and iLeftButton
     jr nz, .increaseScrollLeft
     jr ParallaxCleanUp

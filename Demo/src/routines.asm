@@ -25,24 +25,22 @@ MemSet::
         hl - Address to copy data from
         de - Address to copy data to
         bc - Amount of addresses to copy to
-        wCopyOffset - Set to offset the Sequential Fill
+        C0 - Set to offset the copied values
 */
 MemCopy::
-    ld a, [hl+]
-    push hl
-    ld hl, wCopyOffset
+    ldh a, [C0]
     add a, [hl]
-    pop hl
     ld [de], a
     dec bc
     ld a, c ; Check if zero
     or b
     jr z, .cleanUp
+    inc hl
     inc de
     jr MemCopy
 .cleanUp
     xor a
-    ld [wCopyOffset], a ; Clear the Offset incase this routine is called without it being set
+    ldh [C0], a ; Clear the offset incase this routine is again
     ret
 
 /* Turn on LCD using these attributes */

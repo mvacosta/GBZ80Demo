@@ -4,7 +4,8 @@ SECTION "WRAM", WRAM0[$C000]
 
 WRAMStart:
     ; Shadow Sources
-    wShadowOAM::  ds vSpriteLength ; Source for OAM DMA transfer
+    wShadowOAM::    ds vSpriteLength ; Source for OAM DMA transfer
+    ;wShadowScreen:: ds 64
 
     ; Parallax Scene
     wParallaxScrollArray:: ds 5 * 8 ; ParallaxData is stored here

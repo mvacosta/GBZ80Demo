@@ -1,7 +1,9 @@
 /* Sprite Demo Instructions */
+; Was originally going to showcase more than 40 sprites per frame but scrapping this concept.
+; Keeping this old code here for posterity.
 
 SECTION "Sprites Demo", ROM0
-    
+
 SpriteSceneInit:
     ; Setup Sprite Data
     ld b, _Sprite_Y_BottomScreenBound
@@ -15,7 +17,7 @@ SpriteSceneInit:
     ld [hli], a
     sub a, 9
     ld b, a
-    
+
     ld a, c
     ld [hli], a
     add a, 10
@@ -42,7 +44,7 @@ SpriteSceneInit:
     ld [hli], a
     add a, 9
     ld b, a
-    
+
     ld a, c
     ld [hli], a
     add a, 10
@@ -82,7 +84,7 @@ MoveSpriteUpDown:
     jr z, .MoveDown
     jr .MoveUp
 
-.MoveUp:    
+.MoveUp:
     dec a
     cp _Sprite_Y_TopScreenBound
     jr z, .ResetBit

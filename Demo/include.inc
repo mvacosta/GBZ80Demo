@@ -9,9 +9,7 @@ include "src/wram.asm"
 include "src/rst.asm"
 include "src/interrupts.asm"
 include "src/routines.asm"
-;include "src/scenes/sprites.asm"
 include "src/scenes/parallax.asm"
-;include "src/scenes/wave.asm"
 
 /* Data */
 include "src/gfx.asm"

@@ -191,6 +191,30 @@ PollInput::
 
     ret
 
-; Returns with A containing a random number between 0 - 255 */
+/* Returns with A containing a random number between 0 - 255 */
 RNG::
+    ldh a, [hRNG+1]
+    ld c, a
+    rla
+    rla
+    rla
+    rla
+    xor c
+    ld b, a
+    rla
+    ld d, a
+    ldh a, [hRNG]
+    ld e, a
+    rra
+    ld c, a
+    ldh a, [hRNG+1]
+    xor e
+    xor b
+    xor c
+    xor d
+    ld b, a
+    ldh a, [hRNG]
+    ldh [hRNG+1], a
+    ld a, b
+    ldh [hRNG], a
     ret

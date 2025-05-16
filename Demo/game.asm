@@ -34,7 +34,7 @@ ResetAll::
     ld bc, vSpriteLength
     call MemSet
 
-    ; Clear screen to remove copyrighted logo
+    ; Clear screen to remove logo
     ld l, 0
     ld de, vScreenMap
     ld bc, vWindowMap - vScreenMap

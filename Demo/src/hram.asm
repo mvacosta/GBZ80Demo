@@ -43,7 +43,10 @@ HRAMStart:
     hInputButtonHold:: db ; Input that was held since last frame
     hInputButtonUp::   db ; Input that has been released this frame
 
-    hPadHRAM:: ds 5  ; Just pad out the rest of $FF80; might use it in the future
+    ; Parallax Variables
+    hParallaxScrollValue:: db
+
+    hPadHRAM:: ds 4  ; Just pad out the rest of $FF80; might use it in the future
     hScratch:: ds 16 ; 16 bytes used as scratch RAM; C# constants above refer to this region
 
     union ; Instructions will start & live in this section; it is unionized for easier labelling
@@ -81,11 +84,33 @@ OAMDMATransferInstructions:
 
 /* Call to initialize HRAM */
 InitHRAM::
-    ; Init HRAM values
-    ld l, 0
-    ld de, HRAMStart
-    ld bc, HRAMEnd - HRAMStart
-    call MemSet
+    ; Init HRAM values & Seed initial RNG value
+    ld a, $7F
+    ld c, a
+    ld b, HRAMEnd - HRAMStart
+    ld hl, HRAMStart
+.loop
+    add a, [hl]
+    jr nc, .continue
+    inc c
+.continue
+    ld [hl], 0
+    dec b
+    jr z, .seed
+    inc hl
+    jr .loop
+
+.seed
+    ; Save RNG's initial value & roll it once
+    ldh [hRNG], a
+    ld a, c
+    rla
+    rla
+    rla
+    rla
+    xor c
+    ldh [hRNG+1], a
+    call RNG ; If HRAM is initalized with $00, RNG should become $1F7F
 
     ; Copy OAM DMA transfer routine into HRAM
     ld hl, OAMDMATransferInstructions

@@ -1,11 +1,14 @@
 /* Constants for easier address reading */
 
 /* VRAM Constants */
-def vTileSize8x8  equ 16
-def vTileSize8x16 equ vTileSize8x8 * 2
-def vSpriteSize   equ 4
-def vSpriteCount  equ 40
-def vSpriteLength equ vSpriteCount * vSpriteSize ; 40 sprites with 4 bytes each
+def vTileSize8x8      equ 16
+def vTileSize8x16     equ vTileSize8x8 * 2
+def vSpriteSize       equ 4
+def vSpriteCount      equ 40
+def vSpriteLength     equ vSpriteCount * vSpriteSize ; 40 sprites with 4 bytes each
+def vTransferSize     equ 3
+def vTransferCount    equ 32
+def vTransferLength   equ vTransferCount * vTransferSize
 
 def vTilesBlock0 equ $8000
 def vTilesBlock1 equ $8800
@@ -25,7 +28,7 @@ def iBButton      equ %00000010
 def iAButton      equ %00000001
 
 /* Game Constants */
-def _60FrameCount      equ 60    ; For counting to 60 frames
+def _60FrameCount      equ 60 ; For counting to 60 frames
 def _VRAMSceneOffset   equ $8600 ; VRAM starting from here is free
 def _VRAMTilemapOffset equ $60   ; When using Tilemaps, this offset is after the font and smile sprite
 

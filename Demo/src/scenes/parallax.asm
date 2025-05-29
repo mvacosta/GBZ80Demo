@@ -335,9 +335,6 @@ ParallaxSceneAnimateWaterfalls:
     jr .animLoop
 
 ParallaxSceneVBlank:
-    ; Update Palm Tree positions
-    call hOAMDMATransfer
-
     ; Animate waterfall tiles
     call ParallaxSceneAnimateWaterfalls
 

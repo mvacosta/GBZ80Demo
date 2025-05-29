@@ -21,23 +21,23 @@ ResetAll::
     call TurnOffLCD ; Turn off LCD before any set-up
 
     ; Init WRAM values
-    ld l, 0
-    ld de, WRAMStart
-    ld bc, WRAMEnd - WRAMStart
+    ld b, 0
+    ld hl, WRAMStart
+    ld de, WRAMEnd - WRAMStart
     call MemSet
 
     call InitHRAM ; Init HRAM
 
     ; Clear garbage in OAMRAM
-    ld l, 0
-    ld de, _OAMRAM
-    ld bc, vSpriteLength
+    ld b, 0
+    ld hl, _OAMRAM
+    ld de, vSpriteLength
     call MemSet
 
     ; Clear screen to remove logo
-    ld l, 0
-    ld de, vScreenMap
-    ld bc, vWindowMap - vScreenMap
+    ld b, 0
+    ld hl, vScreenMap
+    ld de, vWindowMap - vScreenMap
     call MemSet
 
     ; Load our tiles into VRAM
@@ -60,6 +60,26 @@ ResetAll::
     ld a, %11011000
     ldh [rOBP1], a
 
+; For testing VBlankTransfer
+;    ; $9800
+;    ld hl, wTransferCopy
+;    ld b, vTransferCount
+;    ld c, $00
+;.loop
+;    ld [hl], c
+;    inc hl
+;    ld [hl], high(vScreenMap)
+;    inc hl
+;    inc c
+;    push bc
+;    call RNG
+;    pop bc
+;    ld [hl+], a
+;    dec b
+;    jr nz, .loop
+;    ld a, vTransferCount
+;    ldh [hTransferCount], a
+
     call ParallaxSceneInit
     call TurnOnLCD
 
@@ -72,17 +92,21 @@ ResetAll::
     dec b
     jr nz, .stackLoop
     ld sp, hStackStart
+
     jr MainLoop.endOfFrame
 
 MainLoop:
-    call FrameStep
     call PollInput
+    call FrameStep
 
     call hUpdateCall
 
     call WaitForVBlank
 
     call hVBlankCall
+
+    call hOAMDMATransfer
+    call VBlankTransfer
 
 ; Start waiting for the top of the frame
 .endOfFrame
@@ -94,8 +118,8 @@ MainLoop:
     ldh [rSTAT], a
     xor a
     ei
-    halt
     nop
+    halt
     di
     ldh [rIE], a
     ldh [rSTAT], a

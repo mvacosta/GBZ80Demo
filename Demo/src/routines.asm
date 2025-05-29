@@ -3,20 +3,19 @@
 SECTION "Routines", ROM0
 
 /*
-    Fills block of memory with byte held in l.
+    Fills block of memory with byte held in b.
     Parameters:
-         l - Byte to set with
-        de - Start address to set to
-        bc - Amount of addresses to set to
+         b - Byte to set with
+        hl - Start address to set to
+        de - Amount of addresses to set to
 */
 MemSet::
-    ld a, l
-    ld [de], a
-    dec bc
-    ld a, c ; Check if zero
-    or b
+    ld a, b
+    ld [hl+], a
+    dec de
+    ld a, e ; Check if zero
+    or d
     ret z
-    inc de
     jr MemSet
 
 /*
@@ -40,7 +39,7 @@ MemCopy::
     jr MemCopy
 .cleanUp
     xor a
-    ldh [C0], a ; Clear the offset incase this routine is again
+    ldh [C0], a ; Clear the offset incase this routine is called again
     ret
 
 /* Turn on LCD using these attributes */
@@ -63,15 +62,14 @@ TurnOffLCD::
 
 /* Wait for the LCD control to enter VBlank via interrupt */
 WaitForVBlank::
-    ei
     xor a
     set IEB_VBLANK, a
     ldh [rIE], a
+    ei
     halt
-    nop
+    di
     xor a
     ldh [rIE], a
-    di
     ret
 
 /*
@@ -191,7 +189,31 @@ PollInput::
 
     ret
 
-/* Returns with A containing a random number between 0 - 255 */
+/*  */
+VBlankTransfer::
+    ldh a, [hTransferCount]
+    cp 0
+    ret z
+    ld b, a
+    ld hl, wTransferCopy
+.loop
+    ld e, [hl]
+    inc hl
+    ld d, [hl]
+    inc hl
+    ld a, [hl+]
+    ld [de], a
+    dec b
+    jr nz, .loop
+    nop
+    nop
+    nop
+    nop
+    ;xor a
+    ;ldh [hTransferCount], a
+    ret
+
+/* Returns with A & hRNG+0 containing a random number between 0 - 255 */
 RNG::
     ldh a, [hRNG+1]
     ld c, a

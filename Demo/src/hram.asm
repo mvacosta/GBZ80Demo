@@ -32,10 +32,11 @@ SECTION "HRAM Labels", HRAM
 
 HRAMStart:
     ; Global Variables
-    hFrameCounter:: db ; Count number of frames from 0-59
-    hTotalFrames::  dw ; Count total amount of frames
-    hTotalSeconds:: dw ; Count every 60 frames
-    hRNG::          dw ; RNG value after being rolled
+    hFrameCounter::  db ; Count number of frames from 0-59
+    hTotalFrames::   dw ; Count total amount of frames
+    hTotalSeconds::  dw ; Count every 60 frames
+    hTransferCount:: db
+    hRNG::           dw ; RNG value after being rolled
 
     ; Controller Input
     hInputButtonLast:: db ; Input from previous frame
@@ -46,18 +47,18 @@ HRAMStart:
     ; Parallax Variables
     hParallaxScrollValue:: db
 
-    hPadHRAM:: ds 4  ; Just pad out the rest of $FF80; might use it in the future
+    hPadHRAM:: ds 3  ; Just pad out the rest of $FF80; might use it in the future
     hScratch:: ds 16 ; 16 bytes used as scratch RAM; C# constants above refer to this region
 
     union ; Instructions will start & live in this section; it is unionized for easier labelling
-        hASM:: ds 29
+        hASM:: ds 32
     nextu
         hOAMDMATransfer:: ds 10
         hUpdateCall::     ds 3
         hVBlankCall::     ds 3
+        hEmergencyReset:  ds 3 ; "jp ResetAll" will be stored here
     endu
 
-    hEmergencyReset: ds 3 ; "jp ResetAll" will be stored here
 HRAMEnd:
 
 hStack:: ds 62   ; This is the top of the stack
@@ -110,7 +111,7 @@ InitHRAM::
     rla
     xor c
     ldh [hRNG+1], a
-    call RNG ; If HRAM is initalized with $00, RNG should become $1F7F
+    call RNG ; If HRAM is initalized with $00, RNG should become $147F
 
     ; Copy OAM DMA transfer routine into HRAM
     ld hl, OAMDMATransferInstructions
@@ -121,22 +122,19 @@ InitHRAM::
     ; Set up the dynamic Update and VBlank calls (and the Emergency Reset)
     ld a, $C3 ; jp instruction
     ld hl, hUpdateCall
-    ld [hl], a
-    inc hl
+    ld [hl+], a
     ld [hl], $FF
     inc hl
     ld [hl], $FF
     inc hl ; hVBlankCall
-    ld [hl], a
-    inc hl
+    ld [hl+], a
     ld [hl], $FF
     inc hl
     ld [hl], $FF
 
     ; This will reset the entire game if execution somehow gets all the way down here
     ld hl, hEmergencyReset
-    ld [hl], a
-    inc hl
+    ld [hl+], a
     ld [hl], low(ResetAll)
     inc hl
     ld [hl], high(ResetAll)

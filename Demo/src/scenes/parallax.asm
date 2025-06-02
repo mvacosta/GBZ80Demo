@@ -167,10 +167,8 @@ ParallaxSceneInit:
     call ParallaxCleanUp
 
     ; Setup Update & VBlank
-    ld de, ParallaxSceneUpdate
-    call SetUpdateCall
-    ld de, ParallaxSceneVBlank
-    call SetVBlankCall
+    SetUpdateCallTo ParallaxSceneUpdate
+    SetVBlankCallTo ParallaxSceneVBlank
     ret
 
 ParallaxSceneUpdate:

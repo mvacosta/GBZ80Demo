@@ -1,5 +1,17 @@
+/* Function Macros */
+
+macro SetUpdateCallTo
+    ld de, \1
+    call SetUpdateCall
+endm
+
+macro SetVBlankCallTo
+    ld de, \1
+    call SetVBlankCall
+endm
+
 /* "Extended" Instruction Macros */
-; Macros that are fake instructions so I don't have to remember the exact order of instructions every time
+; Macros that are like fake instructions so I don't have to remember the exact order of instructions every time
 
 /* JP Extensions */
 

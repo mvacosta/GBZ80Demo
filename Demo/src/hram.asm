@@ -19,14 +19,15 @@ def CD rb
 def CE rb
 def CF rb
 
-def W0 equ C0 ; words
-def W1 equ C2
-def W2 equ C4
-def W3 equ C6
-def W4 equ C8
-def W5 equ CA
-def W6 equ CC
-def W7 equ CE
+rsset $FF90 ; words
+def W0 rw
+def W1 rw
+def W2 rw
+def W3 rw
+def W4 rw
+def W5 rw
+def W6 rw
+def W7 rw
 
 SECTION "HRAM Labels", HRAM
 

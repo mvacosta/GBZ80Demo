@@ -96,8 +96,8 @@ ResetAll::
     jr MainLoop.endOfFrame
 
 MainLoop:
-    call PollInput
-    call FrameStep
+    PollInput
+    ;call FrameStep
 
     call hUpdateCall
 
@@ -120,6 +120,7 @@ MainLoop:
     ei
     nop
     halt
+    nop
     di
     ldh [rIE], a
     ldh [rSTAT], a

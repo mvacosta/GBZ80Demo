@@ -67,35 +67,11 @@ WaitForVBlank::
     ldh [rIE], a
     ei
     halt
+    nop
     di
     xor a
     ldh [rIE], a
     ret
-
-/*
-    Set up the dynamic Update call.
-    Parameters:
-        de - Address used in the dynamic jump
-*/
-SetUpdateCall::
-    ld hl, hUpdateCall+1
-    ld [hl], e
-    inc hl
-    ld [hl], d
-    ret
-
-/*
-    Set up the dynamic VBlank call.
-    Parameters:
-        de - Address used in the dynamic jump
-*/
-SetVBlankCall::
-    ld hl, hVBlankCall+1
-    ld [hl], e
-    inc hl
-    ld [hl], d
-    ret
-
 
 /* Count each frame and increment total frames and "seconds" */
 FrameStep::
@@ -132,63 +108,6 @@ FrameStep::
     xor a ; Reset Counter; Every 0 is ~1 second
     jr .saveCount
 
-/* Read inputs and put them into the four HRAM input variables. */
-PollInput::
-    ld a, P1F_5 ; %00100000; checking to see the status of the D-Pad
-    ldh [rP1], a
-
-    ldh a, [rP1] ; Check multiple times to avoid bouncing
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-
-    and $0F ; Only check with the bottom bits
-    swap a ; Swap the bottom and upper bits
-    ld b, a ; We'll keep the status of the D-Pad in b for the time being
-
-    ld a, P1F_4 ; %00010000; checking to see the status of the four buttons
-    ldh [rP1], a
-
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-
-    and $0F
-    or b ; This effectively stores all 8 inputs into one byte
-
-    ; Store new Inputs
-    cpl
-    ld b, a
-
-    ; Determine Down, Hold, and Up inputs
-    ; b = Current Button Inputs, c = Last Button Inputs
-    ldh a, [hInputButtonLast]
-    ld c, a
-
-    ; Button Down
-    cpl
-    and b
-    ldh [hInputButtonDown], a
-
-    ; Button Held
-    ld a, c
-    and b
-    ldh [hInputButtonHold], a
-
-    ; Button Up
-    ld a, c
-    and b
-    cpl
-    and c
-    ldh [hInputButtonUp], a
-
-    ; Save the current inputs for next frame
-    ld a, b
-    ldh [hInputButtonLast], a
-
-    ret
-
 /*  */
 VBlankTransfer::
     ldh a, [hTransferCount]
@@ -205,12 +124,8 @@ VBlankTransfer::
     ld [de], a
     dec b
     jr nz, .loop
-    nop
-    nop
-    nop
-    nop
-    ;xor a
-    ;ldh [hTransferCount], a
+    xor a
+    ldh [hTransferCount], a
     ret
 
 /* Returns with A & hRNG+0 containing a random number between 0 - 255 */

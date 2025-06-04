@@ -13,10 +13,8 @@ VBlankInterrupt:
 
 SECTION "LCD STAT", ROM0[$0048]
 LCDInterrupt:
+    call hLCDInterruptCall ; 3 bytes
     reti
-    nop
-    nop
-    nop
     nop
     nop
     nop

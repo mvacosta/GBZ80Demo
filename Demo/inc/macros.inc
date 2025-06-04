@@ -1,13 +1,115 @@
 /* Function Macros */
 
+/* Read inputs and put them into the four HRAM input variables. */
+macro PollInput ; Turned into a macro to avoid a call, and to have game.asm be clean
+    ld a, P1F_5 ; %00100000; checking to see the status of the D-Pad
+    ldh [rP1], a
+
+    ldh a, [rP1] ; Check multiple times to avoid bouncing
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+
+    and $0F ; Only check with the bottom bits
+    swap a ; Swap the bottom and upper bits
+    ld b, a ; We'll keep the status of the D-Pad in b for the time being
+
+    ld a, P1F_4 ; %00010000; checking to see the status of the four buttons
+    ldh [rP1], a
+
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+
+    and $0F
+    or b ; This effectively stores all 8 inputs into one byte
+
+    ; Store new Inputs
+    cpl
+    ld b, a
+
+    ; Determine Down, Hold, and Up inputs
+    ; b = Current Button Inputs, c = Last Button Inputs
+    ldh a, [hInputButtonLast]
+    ld c, a
+
+    ; Button Down
+    cpl
+    and b
+    ldh [hInputButtonDown], a
+
+    ; Button Held
+    ld a, c
+    and b
+    ldh [hInputButtonHold], a
+
+    ; Button Up
+    ld a, c
+    and b
+    cpl
+    and c
+    ldh [hInputButtonUp], a
+
+    ; Save the current inputs for next frame
+    ld a, b
+    ldh [hInputButtonLast], a
+endm
+
 macro SetUpdateCallTo
     ld de, \1
-    call SetUpdateCall
+    ld hl, hUpdateCall
+    ld [hl], $C3 ; jp instruction
+    inc hl
+    ld [hl], e
+    inc hl
+    ld [hl], d
+endm
+
+macro ClearUpdateCall
+    xor a
+    ld hl, hUpdateCall
+    ld [hl], $C9 ; ret instruction
+    inc hl
+    ld [hl+], a
+    ld [hl], a
 endm
 
 macro SetVBlankCallTo
     ld de, \1
-    call SetVBlankCall
+    ld hl, hVBlankCall
+    ld [hl], $C3 ; jp instruction
+    inc hl
+    ld [hl], e
+    inc hl
+    ld [hl], d
+endm
+
+macro ClearVBlankCall
+    xor a
+    ld hl, hVBlankCall
+    ld [hl], $C9 ; ret instruction
+    inc hl
+    ld [hl+], a
+    ld [hl], a
+endm
+
+macro SetLCDInterruptTo
+    ld de, \1
+    ld hl, hLCDInterruptCall
+    ld [hl], $C3 ; jp instruction
+    inc hl
+    ld [hl], e
+    inc hl
+    ld [hl], d
+endm
+
+macro ClearLCDInterrupt
+    ld a, $33 ; dec sp instruction
+    ld hl, hLCDInterruptCall
+    ld [hl+], a
+    ld [hl+], a
+    ld [hl], $D9 ; reti instruction
 endm
 
 /* "Extended" Instruction Macros */

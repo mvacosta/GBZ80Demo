@@ -36,7 +36,7 @@ HRAMStart:
     hFrameCounter::  db ; Count number of frames from 0-59
     hTotalFrames::   dw ; Count total amount of frames
     hTotalSeconds::  dw ; Count every 60 frames
-    hTransferCount:: db
+    hTransferCount:: db ; How many bytes to transfer during VBlankTransfer
     hRNG::           dw ; RNG value after being rolled
 
     ; Controller Input
@@ -54,12 +54,12 @@ HRAMStart:
     union ; Instructions will start & live in this section; it is unionized for easier labelling
         hASM:: ds 32
     nextu
-        hOAMDMATransfer:: ds 10
-        hUpdateCall::     ds 3
-        hVBlankCall::     ds 3
-        hEmergencyReset:  ds 3 ; "jp ResetAll" will be stored here
+        hOAMDMATransfer::   ds 10
+        hUpdateCall::       ds 3
+        hVBlankCall::       ds 3
+        hLCDInterruptCall:: ds 3
+        hEmergencyReset::   ds 3 ; "jp ResetAll" will be stored here
     endu
-
 HRAMEnd:
 
 hStack:: ds 62   ; This is the top of the stack
@@ -121,17 +121,9 @@ InitHRAM::
     call MemCopy
 
     ; Set up the dynamic Update and VBlank calls (and the Emergency Reset)
-    ld a, $C3 ; jp instruction
-    ld hl, hUpdateCall
-    ld [hl+], a
-    ld [hl], $FF
-    inc hl
-    ld [hl], $FF
-    inc hl ; hVBlankCall
-    ld [hl+], a
-    ld [hl], $FF
-    inc hl
-    ld [hl], $FF
+    ClearUpdateCall
+    ClearVBlankCall
+    ClearLCDInterrupt
 
     ; This will reset the entire game if execution somehow gets all the way down here
     ld hl, hEmergencyReset

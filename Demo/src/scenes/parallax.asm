@@ -99,22 +99,28 @@ WaterfallAnimData:
 /*
     Base OAM values for the Palm Tree sprite.
 */
+def X00 equ _Parallax_Ground_Base_Scroll
+def Xn1 equ X00 - 8
+def Xn2 equ Xn1 - 8
+def Xp1 equ X00 + 8
+def Xp2 equ Xp1 + 8
 PalmTreeSprite:
-    db                28, 9, 201, 0, 28, 17, 202, 0, 28, 25, 203, 0, 28, 33, 204, 0
-    db 36, 1, 205, 0, 36, 9, 206, 0, 36, 17, 207, 0, 36, 25, 208, 0, 36, 33, 209, 0
-    db 44, 1, 210, 0, 44, 9, 211, 0, 44, 17, 212, 0, 44, 25, 213, 0, 44, 33, 214, 0
-    db 52, 1, 215, 0, 52, 9, 216, 0, 52, 17, 217, 0, 52, 25, 218, 0,
-    db                               60, 17, 219, 0
-    db                               68, 17, 219, 0
-    db                               76, 17, 219, 0
-    db                               84, 17, 219, 0
-    db                               92, 17, 219, 0
-    db                              100, 17, 219, 0
-    db                              108, 17, 219, 0
-    db                              116, 17, 219, 0
-    db                              124, 17, 219, 0
-    db                              132, 17, 200, 0
+    db                  28, Xn1, 201, 0, 28, X00, 202, 0, 28, Xp1, 203, 0, 28, Xp2, 204, 0
+    db 36, Xn2, 205, 0, 36, Xn1, 206, 0, 36, X00, 207, 0, 36, Xp1, 208, 0, 36, Xp2, 209, 0
+    db 44, Xn2, 210, 0, 44, Xn1, 211, 0, 44, X00, 212, 0, 44, Xp1, 213, 0, 44, Xp2, 214, 0
+    db 52, Xn2, 215, 0, 52, Xn1, 216, 0, 52, X00, 217, 0, 52, Xp1, 218, 0,
+    db                                   60, X00, 219, 0
+    db                                   68, X00, 219, 0
+    db                                   76, X00, 219, 0
+    db                                   84, X00, 219, 0
+    db                                   92, X00, 219, 0
+    db                                  100, X00, 219, 0
+    db                                  108, X00, 219, 0
+    db                                  116, X00, 219, 0
+    db                                  124, X00, 219, 0
+    db                                  132, X00, 200, 0
 .end
+purge X00, Xn1, Xn2, Xp1, Xp2
 
 ParallaxSceneInit:
     ; Load parallax tiles into VRAM
@@ -159,6 +165,7 @@ ParallaxSceneInit:
     ld de, wShadowOAM
     ld bc, PalmTreeSprite.end - PalmTreeSprite
     call MemCopy
+    call hOAMDMATransfer ; Transfer to OAM
 
     ; Init WRAM values
     xor a
@@ -172,170 +179,25 @@ ParallaxSceneInit:
     ret
 
 ParallaxSceneUpdate:
-    ld hl, wParallaxScrollArray
-
+    ld a, _Parallax_LYC_Interrupt_Ground
+    ldh [rLYC], a
     xor a
-    ldh [rSTAT], a
-    ldh a, [rIE]
     set IEB_STAT, a
     ldh [rIE], a
+    xor IEF_STAT | STATF_LYC
+    ldh [rSTAT], a
+    SetLCDInterruptTo ParallaxSceneLCDInterrupt
+
     ei
-
-    ; Need to skip cloud line wait since it is at line 0
-    ldh a, [rSTAT]
-    jr .setupScroll
-
-.interruptLoop
-    ; Set up interrupts to scroll in H-Blank
-    ld a, [hl+]
-    ldh [rLYC], a ; Set next line to interrupt
-    xor a
-    set STATB_LYC, a
-    ldh [rSTAT], a
-    halt ; Line interrupt
+    halt
     nop
-
-.setupScroll ; For skipping the initial part of the loop for the clouds
-    inc hl
-    inc hl
-    xor STATF_LYC | STATF_MODE00
-    ldh [rSTAT], a
-    halt ; H-Blank interrupt
+    halt
     nop
-
-    ; Scroll ASAP
-    ld a, [hl-]
-    ldh [rSCX], a
-
-    ; Array in HL looks like this from here:
-    ; 0 - LYC
-    ; 1 - Speed (Lo)
-    ; 2 - Speed (Hi) <- Starting here
-    ; 3 - Pos (Lo)
-    ; 4 - Pos (Hi)
-
-    ; Set up to be able to add 16-bit values (Add Speed to Pos)
-    ld b, [hl]
-    dec hl
-    ld c, [hl]
-    inc hl
-    inc hl
-    push hl
-    push bc
-    ld b, [hl]
-    inc hl
-    ld c, [hl]
-    push bc
-    pop hl ; Swap HL and BC for the loop below to work properly
-    pop bc
-
-    ; Clouds will always scroll at the same speed
-    ldh a, [rLY]
-    jrgq _Parallax_LYC_Interrupt_Mountains_1, .speedLoopStart
-    ld a, 1
-    jr .speedLoop
-
-.speedLoopStart
-    ; Increase scroll amount, multiplying by wParallaxSpeed
-    ld a, [wParallaxSpeed]
-
-.speedLoop
-    jreq 0, .speedLoopEnd
-    add hl, bc
-    dec a
-    jr .speedLoop
-
-.speedLoopEnd
-    ld b, h
-    ld c, l
-    pop hl
-    ld [hl], b
-    inc hl
-    ld [hl], c
-
-    ; Check if end of array
-    inc hl
-    ld a, [hl]
-    jpnq $FF, .interruptLoop
-
-    ; Clean-up
     di
-    xor a
-    ldh [rSTAT], a
-    ldh [rLYC], a
-    ldh [rIE], a
-
-    ; Scroll the Palm Tree using the Ground's scroll value
-    ld a, [wParallaxSpeed - 3] ; Should be the Ground's current X pos
-    ld b, a
-    ld c, (PalmTreeSprite.end - PalmTreeSprite) / vSpriteSize
-    ld hl, PalmTreeSprite
-    ld de, wShadowOAM
-
-.palmLoop
-    inc hl ; Start of X positions
-    inc de
-    ld a, [hl+]
-    sub b
-    ld [de], a
-
-    inc hl
-    inc hl
-    inc de
-    inc de
-    inc de
-
-    dec c
-    jr nz, .palmLoop
 
     ret
-
-ParallaxSceneAnimateWaterfalls:
-    ld a, [wParallaxAnimCount]
-    inc a
-    jreq _Parallax_Waterfall_Anim_Frame_Count, .doAnim
-    ld [wParallaxAnimCount], a
-    ret
-
-.doAnim
-    ; Reset Animation Count
-    xor a
-    ld [wParallaxAnimCount], a
-
-    ; Get waterfall animation data
-    ld b, _Parallax_Mini_Waterfall_Anim_Offset
-    ld c, _Parallax_Mini_Waterfall_Max_Index
-    ld hl, WaterfallAnimData
-    ld a, [hl+]
-
-.animLoop
-    ld e, a
-    ld a, [hl+]
-    ld d, a
-    ld a, [de]
-    jrgq c, .reset
-    add a, b
-    inc hl
-    jr .noReset
-.reset
-    ld a, [hl+]
-.noReset
-    ld [de], a
-    ld a, [hl+]
-    jrnq $FF, .animLoop
-    ; WaterfallAnimData has 2 $FF terminators, make sure to use second half of data before leaving loop
-    ld a, c
-    cp _Parallax_Big_Waterfall_Max_Index
-    ret z
-    ld a, [hl+]
-    ld b, _Parallax_Big_Waterfall_Anim_Offset
-    ld c, _Parallax_Big_Waterfall_Max_Index
-    jr .animLoop
 
 ParallaxSceneVBlank:
-    ; Animate waterfall tiles
-    call ParallaxSceneAnimateWaterfalls
-
     ; Increase scroll speed
     ldh a, [hInputButtonDown]
     and iRightButton
@@ -364,4 +226,27 @@ ParallaxCleanUp:
     ldh [rLYC], a
     ldh [rSCX], a
     ldh [rSCY], a
+    ret
+
+ParallaxSceneLCDInterrupt:
+    push af
+    push de
+    push hl
+    SetLCDInterruptTo .hBlank
+    ld a, IEF_STAT | STATF_MODE00
+    ldh [rSTAT], a
+    pop hl
+    pop de
+    pop af
+    ret
+.hBlank
+    push af
+    ldh a, [CF]
+    inc a
+    ldh [rSCX], a
+    ldh [CF], a
+    push hl
+    ClearLCDInterrupt
+    pop hl
+    pop af
     ret

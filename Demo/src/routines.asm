@@ -44,7 +44,7 @@ MemCopy::
 
 /* Turn on LCD using these attributes */
 TurnOnLCD::
-    ld a, LCDCF_ON | LCDCF_BG8000 | LCDCF_BG9800 | LCDCF_BGON | LCDCF_OBJ8 | LCDCF_OBJON
+    ld a, LCDC_ON | LCDC_BLOCK01 | LCDC_BG_9800 | LCDC_BG_ON | LCDC_OBJ_8 | LCDC_OBJ_ON
     ldh [rLCDC], a
     ret
 
@@ -63,7 +63,7 @@ TurnOffLCD::
 /* Wait for the LCD control to enter VBlank via interrupt */
 WaitForVBlank::
     xor a
-    set IEB_VBLANK, a
+    set B_IE_VBLANK, a
     ldh [rIE], a
     ei
     halt

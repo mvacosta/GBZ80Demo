@@ -1,5 +1,16 @@
 /* Constants for easier address reading */
 
+/* Original hardware.inc Memory Region Constants */
+def _ROM     equ $0000 ; $0000-$3FFF / $0000-$7FFF
+def _ROMBANK equ $4000 ; $4000-$7FFF
+def _VRAM    equ $8000 ; $8000-$9FFF
+def _SRAM    equ $A000 ; $A000-$BFFF
+def _RAM     equ $C000 ; $C000-$CFFF / $C000-$DFFF
+def _RAMBANK equ $D000 ; $D000-$DFFF
+def _OAMRAM  equ $FE00 ; $FE00-$FE9F
+def _IO      equ $FF00 ; $FF00-$FF7F, $FFFF
+def _HRAM    equ $FF80 ; $FF80-$FFFE
+
 /* VRAM Constants */
 def vTileSize8x8      equ 16
 def vTileSize8x16     equ vTileSize8x8 * 2

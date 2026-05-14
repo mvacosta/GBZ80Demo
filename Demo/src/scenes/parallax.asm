@@ -182,9 +182,9 @@ ParallaxSceneUpdate:
     ld a, _Parallax_LYC_Interrupt_Ground
     ldh [rLYC], a
     xor a
-    set IEB_STAT, a
+    set B_IE_STAT, a
     ldh [rIE], a
-    xor IEF_STAT | STATF_LYC
+    xor IE_STAT | STAT_LYC
     ldh [rSTAT], a
     SetLCDInterruptTo ParallaxSceneLCDInterrupt
     ei
@@ -251,7 +251,7 @@ ParallaxSceneLCDInterrupt:
     push de
     push hl
     SetLCDInterruptTo .hBlank
-    ld a, IEF_STAT | STATF_MODE00
+    ld a, IE_STAT | STAT_MODE_0
     ldh [rSTAT], a
     pop hl
     pop de

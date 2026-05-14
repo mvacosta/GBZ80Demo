@@ -3,7 +3,7 @@
 /* Read inputs and put them into the four HRAM input variables. */
 macro PollInput ; Turned into a macro to avoid a call, and to have game.asm be clean
     ; Read D-Pad
-    ld a, P1F_5
+    ld a, JOYP_GET_CTRL_PAD
     ldh [rP1], a
     ldh a, [rP1]
     ldh a, [rP1]
@@ -14,7 +14,7 @@ macro PollInput ; Turned into a macro to avoid a call, and to have game.asm be c
     ld b, a
 
     ; Read buttons
-    ld a, P1F_4
+    ld a, JOYP_GET_BUTTONS
     ldh [rP1], a
     ldh a, [rP1]
     ldh a, [rP1]

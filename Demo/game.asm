@@ -112,9 +112,9 @@ MainLoop:
 .endOfFrame
     xor a
     ldh [rLYC], a
-    set IEB_STAT, a
+    set B_IE_STAT, a
     ldh [rIE], a
-    xor IEF_STAT | STATF_LYC
+    xor IE_STAT | STAT_LYC
     ldh [rSTAT], a
     xor a
     ei

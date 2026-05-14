@@ -24,6 +24,7 @@ db "RGBDS\n"
 db "hardware.inc\n"
 db "ISSOtm\n"
 db "Game Boy Development Community"
-ds 32, "\n"
+ds 31
+db "\n"
 db "Made by  Costa"
 db "\n"

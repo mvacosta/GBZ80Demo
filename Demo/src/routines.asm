@@ -115,7 +115,7 @@ VBlankTransfer::
     ret z
     ld b, a
     ld hl, wTransferCopy
-.loop
+:
     ld e, [hl]
     inc hl
     ld d, [hl]
@@ -123,32 +123,45 @@ VBlankTransfer::
     ld a, [hl+]
     ld [de], a
     dec b
-    jr nz, .loop
+    jr nz, :-
     xor a
     ldh [hTransferCount], a
     ret
 
+/* de has address, a has value */
+AppendToVBlankTransfer::
+    ld b, a
+    ldh a, [hTransferCount]
+    ld c, a
+    ld a, b
+    ld b, $00
+    ld hl, wTransferCopy
+    add hl, bc
+    ld [hl], e
+    inc hl
+    ld [hl], d
+    inc hl
+    ld [de], a
+    ldh a, [hTransferCount]
+    inc a
+    ldh [hTransferCount], a
+
 /* Returns with A & hRNG+0 containing a random number between 0 - 255 */
 RNG::
     ldh a, [hRNG+1]
+    ld b, a
+    add a
+    add a
+    add a
+    add a
+    xor b
     ld c, a
-    rla
-    rla
-    rla
-    rla
+    add a
     xor c
     ld b, a
-    rla
-    ld d, a
     ldh a, [hRNG]
-    ld e, a
-    rra
-    ld c, a
-    ldh a, [hRNG+1]
-    xor e
+    rrca
     xor b
-    xor c
-    xor d
     ld b, a
     ldh a, [hRNG]
     ldh [hRNG+1], a

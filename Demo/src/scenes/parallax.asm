@@ -7,7 +7,7 @@ SECTION "Parallax Demo", ROM0
         0 - LYC Position
         1 - Base Scrolling Speed (Lo)
         2 - Base Scrolling Speed (Hi)
-        2 - Scroll Current Value (Lo; loaded to SCX)
+        2 - Scroll Current Value (Lo)
         3 - Scroll Current Value (Hi)
 */
 ParallaxData:
@@ -165,7 +165,7 @@ ParallaxSceneInit:
     ld de, wShadowOAM
     ld bc, PalmTreeSprite.end - PalmTreeSprite
     call MemCopy
-    call hOAMDMATransfer ; Transfer to OAM
+    call hOAMDMATransfer ; Transfer to OAM so it displays frame 1
 
     ; Init WRAM values
     xor a
@@ -187,14 +187,32 @@ ParallaxSceneUpdate:
     xor IEF_STAT | STATF_LYC
     ldh [rSTAT], a
     SetLCDInterruptTo ParallaxSceneLCDInterrupt
-
     ei
-    halt
-    nop
-    halt
-    nop
-    di
 
+    ; Check if Waterfalls need to be animated
+    ld hl, wParallaxAnimCount
+    ld a, [hl]
+    jreq _Parallax_Waterfall_Anim_Frame_Count, .anim
+    inc a
+    jr .cont
+
+.anim
+    ld hl, WaterfallAnimData
+    ld e, [hl]
+    
+
+    xor a
+    ld hl, wParallaxAnimCount
+
+.cont ; Can skip above if it doesn't need updating
+    ld [hl], a
+
+    halt
+    nop
+    halt
+    nop
+
+    di
     ret
 
 ParallaxSceneVBlank:

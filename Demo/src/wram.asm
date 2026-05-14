@@ -11,4 +11,5 @@ WRAMStart:
     wParallaxScrollArray:: ds 5 * 8 ; ParallaxData is stored here
     wParallaxSpeed::       db       ; How fast the scene is scrolling
     wParallaxAnimCount::   db       ; Count frames to animate waterfalls
+    wParallaxAnimFrame::   db       ; Which frame of animation we're on for the waterfalls
 WRAMEnd:

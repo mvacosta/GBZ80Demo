@@ -2,56 +2,51 @@
 
 /* Read inputs and put them into the four HRAM input variables. */
 macro PollInput ; Turned into a macro to avoid a call, and to have game.asm be clean
-    ld a, P1F_5 ; %00100000; checking to see the status of the D-Pad
+    ; Read D-Pad
+    ld a, P1F_5
     ldh [rP1], a
-
-    ldh a, [rP1] ; Check multiple times to avoid bouncing
-    ldh a, [rP1]
-    ldh a, [rP1]
-    ldh a, [rP1]
-
-    and $0F ; Only check with the bottom bits
-    swap a ; Swap the bottom and upper bits
-    ld b, a ; We'll keep the status of the D-Pad in b for the time being
-
-    ld a, P1F_4 ; %00010000; checking to see the status of the four buttons
-    ldh [rP1], a
-
     ldh a, [rP1]
     ldh a, [rP1]
     ldh a, [rP1]
     ldh a, [rP1]
-
     and $0F
-    or b ; This effectively stores all 8 inputs into one byte
+    swap a
+    ld b, a
 
-    ; Store new Inputs
+    ; Read buttons
+    ld a, P1F_4
+    ldh [rP1], a
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    ldh a, [rP1]
+    and $0F
+    or b
     cpl
     ld b, a
 
-    ; Determine Down, Hold, and Up inputs
-    ; b = Current Button Inputs, c = Last Button Inputs
+    ; Load last frame
     ldh a, [hInputButtonLast]
     ld c, a
 
     ; Button Down
+    ld a, c
     cpl
     and b
     ldh [hInputButtonDown], a
 
     ; Button Held
-    ld a, c
-    and b
+    ld a, b
+    and c
     ldh [hInputButtonHold], a
 
     ; Button Up
-    ld a, c
-    and b
+    ld a, b
     cpl
     and c
     ldh [hInputButtonUp], a
 
-    ; Save the current inputs for next frame
+    ; Save current as last
     ld a, b
     ldh [hInputButtonLast], a
 endm

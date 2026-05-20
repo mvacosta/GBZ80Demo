@@ -141,10 +141,11 @@ AppendToVBlankTransfer::
     inc hl
     ld [hl], d
     inc hl
-    ld [de], a
+    ld [hl], a
     ldh a, [hTransferCount]
     inc a
     ldh [hTransferCount], a
+    ret
 
 /* Returns with A & hRNG+0 containing a random number between 0 - 255 */
 RNG::

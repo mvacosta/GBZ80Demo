@@ -38,62 +38,61 @@ ParallaxData:
     db $FF ; Terminator
 .end
 
-/*
-    Data for animating the waterfalls.
-        0 - Sreen Map Index
-        1 - Tile Index
-*/
-WaterfallAnimData:
-    ; Left Mini Waterfall
+WaterfallMiniLeft_ScTile:
     dw vScreenMap+230
-    db _Parallax_Mini_Waterfall_Min_Index
     dw vScreenMap+231
-    db _Parallax_Mini_Waterfall_Min_Index+1
     dw vScreenMap+262
-    db _Parallax_Mini_Waterfall_Min_Index+2
     dw vScreenMap+263
-    db _Parallax_Mini_Waterfall_Min_Index+3
-    ; Right Mini Waterfall
+.end
+
+WaterfallMiniRight__ScTile:
     dw vScreenMap+246
-    db _Parallax_Mini_Waterfall_Min_Index
     dw vScreenMap+247
-    db _Parallax_Mini_Waterfall_Min_Index+1
     dw vScreenMap+278
-    db _Parallax_Mini_Waterfall_Min_Index+2
     dw vScreenMap+279
-    db _Parallax_Mini_Waterfall_Min_Index+3
-    db $FF ; First terminator to know when to check for Big Waterfall
-    ; Big Waterfall (Top Tiles)
-    dw vScreenMap+237
-    db _Parallax_Big_Waterfall_Min_Index
+.end
+
+WaterfallBig__ScTile:
+    dw vScreenMap+237 ; Top Tiles
     dw vScreenMap+238
-    db _Parallax_Big_Waterfall_Min_Index+1
     dw vScreenMap+239
-    db _Parallax_Big_Waterfall_Min_Index+1
     dw vScreenMap+240
-    db _Parallax_Big_Waterfall_Min_Index+1
     dw vScreenMap+241
-    db _Parallax_Big_Waterfall_Min_Index+1
     dw vScreenMap+242
-    db _Parallax_Big_Waterfall_Min_Index+2
-    ; Big Waterfall (Bottom Tiles)
-    dw vScreenMap+268
-    db _Parallax_Big_Waterfall_Min_Index+3
+    dw vScreenMap+268 ; Bottom Tiles
     dw vScreenMap+269
-    db _Parallax_Big_Waterfall_Min_Index+4
     dw vScreenMap+270
-    db _Parallax_Big_Waterfall_Min_Index+5
     dw vScreenMap+271
-    db _Parallax_Big_Waterfall_Min_Index+5
     dw vScreenMap+272
-    db _Parallax_Big_Waterfall_Min_Index+5
     dw vScreenMap+273
-    db _Parallax_Big_Waterfall_Min_Index+5
     dw vScreenMap+274
-    db _Parallax_Big_Waterfall_Min_Index+6
     dw vScreenMap+275
-    db _Parallax_Big_Waterfall_Min_Index+7
-    db $FF ; Second terminator
+.end
+
+WaterfallMini_Anim:
+    ; Frame 1
+    db 184, 185, 186, 187
+    ; Frame 2
+    db 188, 189, 190, 191
+    ; Frame 3
+    db 192, 193, 194, 195
+    ; Frame 4
+    db 196, 197, 198, 199
+.end
+
+WaterfallBig_Anim:
+    ; Frame 1
+    db      152, 153, 153, 153, 153, 154      ; Top tiles
+    db 155, 156, 157, 157, 157, 157, 158, 159 ; Bottom tiles
+    ; Frame 2
+    db      160, 161, 161, 161, 161, 162
+    db 163, 164, 165, 165, 165, 165, 166, 167
+    ; Frame 3
+    db      168, 169, 169, 169, 169, 170
+    db 171, 172, 173, 173, 173, 173, 174, 175
+    ; Frame 4
+    db      176, 177, 177, 177, 177, 178
+    db 179 ,180, 181, 181, 181, 181, 182, 183
 .end
 
 /*
@@ -143,24 +142,60 @@ ParallaxSceneInit:
     ld bc, ParallaxData.end - ParallaxData
     call MemCopy
 
-    ; Setup waterfall first set of tiles
-    ld c, 2
-    ld hl, WaterfallAnimData
-    ld a, [hl+]
+    ; Set initial state for Waterfalls
+    xor a
+    ldh [C0], a
+    ld hl, wTransferCopy
+    ld de, WaterfallMiniLeft_ScTile
+    ld b, 4
 
-.waterfallLoop
-    ld e, a
-    ld a, [hl+]
-    ld d, a
-    ld a, [hl+]
-    ld [de], a
-    ld a, [hl+]
-    jrnq $FF, .waterfallLoop
-    ld a, [hl+]
-    dec c
-    jr nz, .waterfallLoop
+:   ; Our loop for copying data to wTransferCopy
+    ld a, [de]
+    ld [hl+], a
+    inc de
+    ld a, [de]
+    ld [hl+], a
+    inc de
+    push hl
+    ld hl, WaterfallMini_Anim
+    ldh a, [C0]
+    add l
+    ld l, a
+    ldh a, [C0]
+    inc a
+    ldh [C0], a
+    ld a, [hl]
+    pop hl
+    ld [hl+], a
+    dec b
+    jr nz, :-
+
+    ldh a, [C0]
+    jreq 4, :+
+    jreq 12, :++
+    jr :++++
+
+:   ; Mini Right Waterfall Set-Up
+    ld b, 4
+    jr :++
+
+:   ; Big Waterfall Set-Up
+    ld b, 14
+
+:   ; Next Waterfall Set-Up
+    add 4 ; Not done, so start populating from this offset
+    ldh [C0], a
+    jr :----
+
+:   ; Finish
+    ; We populated this data in wTransferCopy so let's transfer!
+    ld a, 22
+    ldh [hTransferCount], a
+    call VBlankTransfer
 
     ; Display Palm Tree as sprite
+    xor a
+    ldh [C0], a
     ld hl, PalmTreeSprite
     ld de, wShadowOAM
     ld bc, PalmTreeSprite.end - PalmTreeSprite
@@ -197,9 +232,7 @@ ParallaxSceneUpdate:
     jr .cont
 
 .anim
-    ld hl, WaterfallAnimData
-    ld e, [hl]
-    
+    ;
 
     xor a
     ld hl, wParallaxAnimCount

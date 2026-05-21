@@ -38,6 +38,9 @@ ParallaxData:
     db $FF ; Terminator
 .end
 
+/*
+    Waterfall Mini Left & Right Animation Data
+*/
 WaterfallMiniLeft_ScTile:
     dw vScreenMap+230
     dw vScreenMap+231
@@ -45,14 +48,42 @@ WaterfallMiniLeft_ScTile:
     dw vScreenMap+263
 .end
 
-WaterfallMiniRight__ScTile:
+WaterfallMiniRight_ScTile:
     dw vScreenMap+246
     dw vScreenMap+247
     dw vScreenMap+278
     dw vScreenMap+279
 .end
 
-WaterfallBig__ScTile:
+WaterfallMini_Anim:
+    .Frame1
+    db 184, 185, 186, 187
+    .Frame2
+    db 188, 189, 190, 191
+    .Frame3
+    db 192, 193, 194, 195
+    .Frame4
+    db 196, 197, 198, 199
+.end
+
+WaterfallMiniLeft_Seq:
+    dw WaterfallMini_Anim.Frame1
+    dw WaterfallMini_Anim.Frame2
+    dw WaterfallMini_Anim.Frame3
+    dw WaterfallMini_Anim.Frame4
+.end
+
+WaterfallMiniRight_Seq:
+    dw WaterfallMini_Anim.Frame3
+    dw WaterfallMini_Anim.Frame4
+    dw WaterfallMini_Anim.Frame1
+    dw WaterfallMini_Anim.Frame2
+.end
+
+/*
+    Waterfall Big Animation Data
+*/
+WaterfallBig_ScTile:
     dw vScreenMap+237 ; Top Tiles
     dw vScreenMap+238
     dw vScreenMap+239
@@ -69,30 +100,26 @@ WaterfallBig__ScTile:
     dw vScreenMap+275
 .end
 
-WaterfallMini_Anim:
-    ; Frame 1
-    db 184, 185, 186, 187
-    ; Frame 2
-    db 188, 189, 190, 191
-    ; Frame 3
-    db 192, 193, 194, 195
-    ; Frame 4
-    db 196, 197, 198, 199
-.end
-
 WaterfallBig_Anim:
-    ; Frame 1
+    .Frame1
     db      152, 153, 153, 153, 153, 154      ; Top tiles
     db 155, 156, 157, 157, 157, 157, 158, 159 ; Bottom tiles
-    ; Frame 2
+    .Frame2
     db      160, 161, 161, 161, 161, 162
     db 163, 164, 165, 165, 165, 165, 166, 167
-    ; Frame 3
+    .Frame3
     db      168, 169, 169, 169, 169, 170
     db 171, 172, 173, 173, 173, 173, 174, 175
-    ; Frame 4
+    .Frame4
     db      176, 177, 177, 177, 177, 178
     db 179 ,180, 181, 181, 181, 181, 182, 183
+.end
+
+WaterfallBig_Seq:
+    dw WaterfallBig_Anim.Frame1
+    dw WaterfallBig_Anim.Frame2
+    dw WaterfallBig_Anim.Frame3
+    dw WaterfallBig_Anim.Frame4
 .end
 
 /*
@@ -121,6 +148,10 @@ PalmTreeSprite:
 .end
 purge X00, Xn1, Xn2, Xp1, Xp2
 
+/* 
+    Routines
+*/
+
 ParallaxSceneInit:
     ; Load parallax tiles into VRAM
     ld hl, ParallaxTiles
@@ -142,56 +173,9 @@ ParallaxSceneInit:
     ld bc, ParallaxData.end - ParallaxData
     call MemCopy
 
-    ; Set initial state for Waterfalls
-    xor a
-    ldh [C0], a
-    ld hl, wTransferCopy
-    ld de, WaterfallMiniLeft_ScTile
-    ld b, 4
-
-:   ; Our loop for copying data to wTransferCopy
-    ld a, [de]
-    ld [hl+], a
-    inc de
-    ld a, [de]
-    ld [hl+], a
-    inc de
-    push hl
-    ld hl, WaterfallMini_Anim
-    ldh a, [C0]
-    add l
-    ld l, a
-    ldh a, [C0]
-    inc a
-    ldh [C0], a
-    ld a, [hl]
-    pop hl
-    ld [hl+], a
-    dec b
-    jr nz, :-
-
-    ldh a, [C0]
-    jreq 4, :+
-    jreq 12, :++
-    jr :++++
-
-:   ; Mini Right Waterfall Set-Up
-    ld b, 4
-    jr :++
-
-:   ; Big Waterfall Set-Up
-    ld b, 14
-
-:   ; Next Waterfall Set-Up
-    add 4 ; Not done, so start populating from this offset
-    ldh [C0], a
-    jr :----
-
-:   ; Finish
-    ; We populated this data in wTransferCopy so let's transfer!
-    ld a, 22
-    ldh [hTransferCount], a
-    call VBlankTransfer
+    ; Init Waterfall Animation
+    call DoWaterfallAnimation ; Call once to populate Waterfall data
+    call VBlankTransfer ; Transfer immediately to have the Waterfalls displayed frame 1
 
     ; Display Palm Tree as sprite
     xor a
@@ -213,6 +197,7 @@ ParallaxSceneInit:
     SetVBlankCallTo ParallaxSceneVBlank
     ret
 
+
 ParallaxSceneUpdate:
     ld a, _Parallax_LYC_Interrupt_Ground
     ldh [rLYC], a
@@ -224,22 +209,18 @@ ParallaxSceneUpdate:
     SetLCDInterruptTo ParallaxSceneLCDInterrupt
     ei
 
-    ; Check if Waterfalls need to be animated
-    ld hl, wParallaxAnimCount
-    ld a, [hl]
-    jreq _Parallax_Waterfall_Anim_Frame_Count, .anim
+    ld a, [wParallaxAnimCount]
+    jreq _Parallax_Waterfall_Anim_Frame_Count, :+
     inc a
-    jr .cont
+    ld [wParallaxAnimCount], a
+    jr .end
 
-.anim
-    ;
-
+:   ; Do the Waterfall animation and reset the frame count
+    call DoWaterfallAnimation
     xor a
-    ld hl, wParallaxAnimCount
+    ld [wParallaxAnimCount], a
 
-.cont ; Can skip above if it doesn't need updating
-    ld [hl], a
-
+.end ; Can skip above if it doesn't need updating
     halt
     nop
     halt
@@ -247,6 +228,106 @@ ParallaxSceneUpdate:
 
     di
     ret
+
+
+DoWaterfallAnimation:
+    ld a, [wParallaxAnimFrame]
+    ldh [C0], a
+
+    ; Left Mini Waterfall
+    add a
+    ld hl, WaterfallMiniLeft_Seq
+    add l
+    ld l, a
+    jr nc, :+
+    inc h
+:
+    ld a, [hl+]
+    ldh [W1], a
+    ld a, [hl]
+    ldh [W1+1], a
+    ld hl, wTransferCopy
+    ld de, WaterfallMiniLeft_ScTile
+    ld b, WaterfallMini_Anim.Frame2 - WaterfallMini_Anim.Frame1
+    call .fillLoop
+
+    ; Right Mini Waterfall
+    ldh a, [C0]
+    add a
+    push hl
+    ld hl, WaterfallMiniRight_Seq
+    add l
+    ld l, a
+    jr nc, :+
+    inc h
+:
+    ld a, [hl+]
+    ldh [W1], a
+    ld a, [hl]
+    ldh [W1+1], a
+    pop hl
+    ld de, WaterfallMiniRight_ScTile
+    ld b, WaterfallMini_Anim.Frame2 - WaterfallMini_Anim.Frame1
+    call .fillLoop
+
+    ; Big Waterfall
+    ld a, [C0]
+    add a
+    push hl
+    ld hl, WaterfallBig_Seq
+    add l
+    ld l, a
+    jr nc, :+
+    inc h
+:
+    ld a, [hl+]
+    ldh [W1], a
+    ld a, [hl]
+    ldh [W1+1], a
+    pop hl
+    ld de, WaterfallBig_ScTile
+    ld b, WaterfallBig_Anim.Frame2 - WaterfallBig_Anim.Frame1
+    call .fillLoop
+    jr .end
+
+.fillLoop
+    ld a, [de]
+    ld [hl+],a
+    inc de
+    ld a, [de]
+    ld [hl+], a
+    inc de
+    push hl
+    ld a, [W1]
+    ld l, a
+    inc a
+    ldh [W1], a
+    ld a, [W1+1]
+    ld h, a
+    jr nz, :+
+    inc a
+    ldh [W1+1], a
+:
+    ld a, [hl]
+    pop hl
+    ld [hl+], a
+    dec b
+    jr nz, .fillLoop
+    ret
+
+.end
+    ; Increment animation frame
+    ld a, [wParallaxAnimFrame]
+    inc a
+    jrls 4, :+
+    xor a
+:
+    ld [wParallaxAnimFrame], a
+    ldh a, [hTransferCount]
+    add ((WaterfallMini_Anim.Frame2 - WaterfallMini_Anim.Frame1) * 2) + (WaterfallBig_Anim.Frame2 - WaterfallBig_Anim.Frame1)
+    ldh [hTransferCount], a
+    ret
+
 
 ParallaxSceneVBlank:
     ; Increase scroll speed
@@ -278,6 +359,7 @@ ParallaxCleanUp:
     ldh [rSCX], a
     ldh [rSCY], a
     ret
+
 
 ParallaxSceneLCDInterrupt:
     push af

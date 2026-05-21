@@ -60,26 +60,6 @@ ResetAll::
     ld a, %11011000
     ldh [rOBP1], a
 
-; For testing VBlankTransfer
-;    ; $9800
-;    ld hl, wTransferCopy
-;    ld b, vTransferCount
-;    ld c, $00
-;.loop
-;    ld [hl], c
-;    inc hl
-;    ld [hl], high(vScreenMap)
-;    inc hl
-;    inc c
-;    push bc
-;    call RNG
-;    pop bc
-;    ld [hl+], a
-;    dec b
-;    jr nz, .loop
-;    ld a, vTransferCount
-;    ldh [hTransferCount], a
-
     call ParallaxSceneInit
     call TurnOnLCD
 

@@ -98,7 +98,6 @@ MainLoop:
     ldh [rSTAT], a
     xor a
     ei
-    nop
     halt
     nop
     di

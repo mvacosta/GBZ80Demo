@@ -3,39 +3,28 @@
 SECTION "Parallax Demo", ROM0
 
 /*
-    Data for when to scroll the screen.
-        0 - LYC Position
-        1 - Base Scrolling Speed (Lo)
-        2 - Base Scrolling Speed (Hi)
-        2 - Scroll Current Value (Lo)
-        3 - Scroll Current Value (Hi)
+    Parallax Scrolling Data
 */
-ParallaxData:
-    ; Skip LYC for Clouds (since it scrolls at 0)
-    dw _Parallax_Clouds_1_Base_Scroll
-    dw _Parallax_Clouds_1_Base_Scroll
-    db _Parallax_LYC_Interrupt_Clouds_2
-    dw _Parallax_Clouds_2_Base_Scroll
-    dw _Parallax_Clouds_2_Base_Scroll
-    db _Parallax_LYC_Interrupt_Mountains_1
-    dw _Parallax_Mountains_1_Base_Scroll
-    dw _Parallax_Mountains_1_Base_Scroll
-    db _Parallax_LYC_Interrupt_Mountains_2
-    dw _Parallax_Mountains_2_Base_Scroll
-    dw _Parallax_Mountains_2_Base_Scroll
-    db _Parallax_LYC_Interrupt_Lake_1
-    dw _Parallax_Lake_1_Base_Scroll
-    dw _Parallax_Lake_1_Base_Scroll
-    db _Parallax_LYC_Interrupt_Lake_2
-    dw _Parallax_Lake_2_Base_Scroll
-    dw _Parallax_Lake_2_Base_Scroll
-    db _Parallax_LYC_Interrupt_Lake_3
-    dw _Parallax_Lake_3_Base_Scroll
-    dw _Parallax_Lake_3_Base_Scroll
-    db _Parallax_LYC_Interrupt_Ground
-    dw _Parallax_Ground_Base_Scroll
-    dw _Parallax_Ground_Base_Scroll
-    db $FF ; Terminator
+ParallaxScroll_Speeds:
+    dw 200 ; Clouds 1
+    dw 100 ; Clouds 2
+    dw 25  ; Mountains 1
+    dw 35  ; Mountains 2
+    dw 60  ; Lake 1
+    dw 70  ; Lake 2
+    dw 80  ; Lake 3
+    dw 128 ; Ground
+.end
+
+ParallaxLCDCInterrupt_Lines:
+    db 0   ; Clouds 1
+    db 23  ; Clouds 2
+    db 31  ; Mountains 1
+    db 53  ; Mountains 2
+    db 71  ; Lake 1
+    db 79  ; Lake 2
+    db 95  ; Lake 3
+    db 119 ; Ground
 .end
 
 /*
@@ -125,7 +114,7 @@ WaterfallBig_Seq:
 /*
     Base OAM values for the Palm Tree sprite.
 */
-def X00 equ _Parallax_Ground_Base_Scroll
+def X00 equ 128
 def Xn1 equ X00 - 8
 def Xn2 equ Xn1 - 8
 def Xp1 equ X00 + 8
@@ -153,6 +142,15 @@ purge X00, Xn1, Xn2, Xp1, Xp2
 */
 
 ParallaxSceneInit:
+    ; Init values
+    xor a
+    ld [wParallaxScrollIndex], a
+    ld [wParallaxNextSCX], a
+    ld [wParallaxSpeed], a
+    ld [wParallaxAnimCount], a
+    ld [wParallaxAnimFrame], a
+    call ParallaxCleanUp
+
     ; Load parallax tiles into VRAM
     ld hl, ParallaxTiles
     ld de, _VRAMSceneOffset
@@ -168,9 +166,9 @@ ParallaxSceneInit:
     call MemCopy
 
     ; Setup parallax array with initial data
-    ld hl, ParallaxData
+    ld hl, ParallaxScroll_Speeds
     ld de, wParallaxScrollArray
-    ld bc, ParallaxData.end - ParallaxData
+    ld bc, ParallaxScroll_Speeds.end - ParallaxScroll_Speeds
     call MemCopy
 
     ; Init Waterfall Animation
@@ -186,12 +184,6 @@ ParallaxSceneInit:
     call MemCopy
     call hOAMDMATransfer ; Transfer to OAM so it displays frame 1
 
-    ; Init WRAM values
-    xor a
-    ld [wParallaxSpeed], a
-    ld [wParallaxAnimCount], a
-    call ParallaxCleanUp
-
     ; Setup Update & VBlank
     SetUpdateCallTo ParallaxSceneUpdate
     SetVBlankCallTo ParallaxSceneVBlank
@@ -199,7 +191,8 @@ ParallaxSceneInit:
 
 
 ParallaxSceneUpdate:
-    ld a, _Parallax_LYC_Interrupt_Ground
+    ; Setup interrupts for parallax scrolling
+    ld a, 0 ; Clouds 1 scrolls immediately
     ldh [rLYC], a
     xor a
     set B_IE_STAT, a
@@ -207,8 +200,9 @@ ParallaxSceneUpdate:
     xor IE_STAT | STAT_LYC
     ldh [rSTAT], a
     SetLCDInterruptTo ParallaxSceneLCDInterrupt
-    ei
+    ei ; Enable interrupt to scroll background when needed
 
+    ; Check if we need to animate the waterfall
     ld a, [wParallaxAnimCount]
     jreq _Parallax_Waterfall_Anim_Frame_Count, :+
     inc a
@@ -220,11 +214,11 @@ ParallaxSceneUpdate:
     xor a
     ld [wParallaxAnimCount], a
 
-.end ; Can skip above if it doesn't need updating
+.end ; Once here, we just need to wait for HBlank interrupts
     halt
     nop
-    halt
-    nop
+    ldh a, [rLY]
+    jrlq 119, .end
 
     di
     ret
@@ -374,12 +368,55 @@ ParallaxSceneLCDInterrupt:
     ret
 .hBlank
     push af
-    ldh a, [CF]
-    inc a
+    ld a, [wParallaxNextSCX]
     ldh [rSCX], a
-    ldh [CF], a
+
+    ; Setup for the next line scroll amount
+    push bc
+    push de
     push hl
+    ld a, [wParallaxScrollIndex]
+    inc a
+    ldh [CF], a
+    add a
+    ld hl, wParallaxScrollArray
+    ld b, 0
+    ld c, a
+    add hl, bc
+    ld a, [hl]
+    ld [wParallaxNextSCX], a
+
+    ; See if we've reached the end of the array
+    ldh a, [CF]
+    jreq (ParallaxLCDCInterrupt_Lines.end - ParallaxLCDCInterrupt_Lines), .noMoreScrolling
+
+    ; If not setup next line scroll
+    ld [wParallaxScrollIndex], a
+    ld hl, ParallaxLCDCInterrupt_Lines
+    ld b, 0
+    ld c, a
+    add hl, bc
+    ld a, [hl]
+    ldh [rLYC], a
+    xor a
+    set B_IE_STAT, a
+    ldh [rIE], a
+    xor IE_STAT | STAT_LYC
+    ldh [rSTAT], a
+    SetLCDInterruptTo ParallaxSceneLCDInterrupt
+    jr .end
+
+.noMoreScrolling
+    xor a
+    ld [wParallaxScrollIndex], a
+    ld hl, wParallaxScrollArray
+    ld a, [hl]
+    ld [wParallaxNextSCX], a
     ClearLCDInterrupt
+
+.end
     pop hl
+    pop de
+    pop bc
     pop af
     ret

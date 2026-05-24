@@ -63,8 +63,8 @@ def _Sprite_X_RightScreenBound  equ 160
     Parallax Scene Constants
 */
 ; Speed Control Multiplier
-def _Parallax_Scroll_Min_Speed equ 0
-def _Parallax_Scroll_Max_Speed equ 6
+def _Parallax_Scroll_Min_Speed equ -6
+def _Parallax_Scroll_Max_Speed equ  6
 
 ; Waterfall Animation
 def _Parallax_Waterfall_Anim_Frame_Count equ 6

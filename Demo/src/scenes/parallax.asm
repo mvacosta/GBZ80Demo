@@ -92,16 +92,16 @@ WaterfallBig_ScTile:
 WaterfallBig_Anim:
     .Frame1
     db      152, 153, 153, 153, 153, 154      ; Top tiles
-    db 155, 156, 157, 157, 157, 157, 158, 159 ; Bottom tiles
+    db 155, 156, 157, 156, 157, 156, 158, 159 ; Bottom tiles
     .Frame2
     db      160, 161, 161, 161, 161, 162
-    db 163, 164, 165, 165, 165, 165, 166, 167
+    db 163, 164, 165, 164, 165, 164, 166, 167
     .Frame3
     db      168, 169, 169, 169, 169, 170
-    db 171, 172, 173, 173, 173, 173, 174, 175
+    db 171, 172, 173, 172, 173, 172, 174, 175
     .Frame4
     db      176, 177, 177, 177, 177, 178
-    db 179 ,180, 181, 181, 181, 181, 182, 183
+    db 179 ,180, 181, 180, 181, 180, 182, 183
 .end
 
 WaterfallBig_Seq:
@@ -145,10 +145,13 @@ ParallaxSceneInit:
     ; Init values
     xor a
     ld [wParallaxScrollIndex], a
-    ld [wParallaxNextSCX], a
     ld [wParallaxSpeed], a
     ld [wParallaxAnimCount], a
     ld [wParallaxAnimFrame], a
+    ld hl, wParallaxScrollArray ; Cloud 1 layer needs to have the NextSCX populated
+    inc hl
+    ld a, [hl]
+    ld [wParallaxNextSCX], a
     call ParallaxCleanUp
 
     ; Load parallax tiles into VRAM
@@ -202,6 +205,86 @@ ParallaxSceneUpdate:
     SetLCDInterruptTo ParallaxSceneLCDInterrupt
     ei ; Enable interrupt to scroll background when needed
 
+    ; Update wParallaxScrollArray's values
+    xor a
+    ldh [C0], a
+    ld hl, wParallaxScrollArray
+:
+    ; Get the value to increment by
+    push hl
+    add a
+    ld b, 0
+    ld c, a
+    ld hl, ParallaxScroll_Speeds
+    add hl, bc
+
+    ; Add value to current position
+    ld a, [hl]
+    ld c, a
+    pop hl
+    ld a, [hl+]
+    ld e, a
+    ld a, [hl-]
+    ld d, a
+    push hl
+    push de
+    pop hl
+
+    ; For layers below Clouds, we need to multiple by wParallaxSpeed
+    ldh a, [C0]
+    jrls 2, :+
+    jr :++
+:   ; Clouds 1 & 2, just add once
+    ld a, 1
+    jr .addParallax
+:   ; Lower than clouds, we need to iterate
+    ld a, [wParallaxSpeed]
+    bit 7, a
+    jr z, .addParallax
+    ; First we need to turn the value into a a positive one
+    cpl
+    inc a
+
+.subParallax
+    ld [C1], a
+    ld a, l
+    sub c
+    ld l, a
+    ld a, h
+    sbc a, b
+    ld h, a
+    ldh a, [C1]
+    dec a
+    jr nz, .subParallax
+    jr :+
+
+.addParallax
+    add hl, bc
+    dec a
+    jr nz, .addParallax
+:
+    ; Store back in array
+    ld e, l
+    ld d, h
+    pop hl
+    ld a, e
+    ld [hl+], a
+    ld a, d
+    ld [hl+], a
+
+    ; Continue for each parallax layer
+    ldh a, [C0]
+    inc a
+    ld b, a
+    jrls 2, :+
+    ld a, [wParallaxSpeed]
+    cp 0
+    jr z, :++
+:   ; If wParallaxSpeed is 0 we don't need to update the layers below Clouds
+    ld a, b
+    ldh [C0], a
+    jrls (ParallaxLCDCInterrupt_Lines.end - ParallaxLCDCInterrupt_Lines), :-----
+:
     ; Check if we need to animate the waterfall
     ld a, [wParallaxAnimCount]
     jreq _Parallax_Waterfall_Anim_Frame_Count, :+
@@ -218,7 +301,7 @@ ParallaxSceneUpdate:
     halt
     nop
     ldh a, [rLY]
-    jrlq 119, .end
+    jrls 119, .end ; 119 would be the last parallax layer
 
     di
     ret
@@ -335,16 +418,23 @@ ParallaxSceneVBlank:
 
 .increaseScrollRight ; Increase scroll speed to the right
     ld a, [wParallaxSpeed]
-    jrgq _Parallax_Scroll_Max_Speed, ParallaxCleanUp
     inc a
+    bit 7, a
+    jr nz, :+
+    jrgr _Parallax_Scroll_Max_Speed, ParallaxCleanUp
+:
     ld [wParallaxSpeed], a
     jr ParallaxCleanUp
 
 .increaseScrollLeft ; Increase scroll speed to the left
     ld a, [wParallaxSpeed]
-    jrlq _Parallax_Scroll_Min_Speed, ParallaxCleanUp
     dec a
+    bit 7, a
+    jr z, :+
+    jrls _Parallax_Scroll_Min_Speed, ParallaxCleanUp
+:
     ld [wParallaxSpeed], a
+
 
 ParallaxCleanUp:
     ; Minor clean-up
@@ -377,17 +467,18 @@ ParallaxSceneLCDInterrupt:
     push hl
     ld a, [wParallaxScrollIndex]
     inc a
-    ldh [CF], a
+    ldh [CC], a
     add a
     ld hl, wParallaxScrollArray
     ld b, 0
     ld c, a
     add hl, bc
+    inc hl
     ld a, [hl]
     ld [wParallaxNextSCX], a
 
     ; See if we've reached the end of the array
-    ldh a, [CF]
+    ldh a, [CC]
     jreq (ParallaxLCDCInterrupt_Lines.end - ParallaxLCDCInterrupt_Lines), .noMoreScrolling
 
     ; If not setup next line scroll
@@ -410,6 +501,7 @@ ParallaxSceneLCDInterrupt:
     xor a
     ld [wParallaxScrollIndex], a
     ld hl, wParallaxScrollArray
+    inc hl
     ld a, [hl]
     ld [wParallaxNextSCX], a
     ClearLCDInterrupt

@@ -7,6 +7,42 @@ WRAMStart:
     wShadowOAM::      ds vSpriteLength   ; Source for OAM DMA transfer
     wTransferCopy::   ds vTransferLength ; Source for VBlankTransfer (meant for Screen and Window tiles but could be used for copying random bytes)
 
+    ; Object Handling (Proof-of-concept for the demo)
+    union
+        Object0::
+    nextu
+        .XPos     dw
+        .YPos     dw
+        .OAMFlags db
+        union
+            .Collision
+        nextu
+            .XOffset db
+            .YOffset db
+            .Width   db
+            .Height  db
+        endu
+        .SpriteData dw
+        .OnUpdate   dw
+    endu
+    union
+        Object1::
+    nextu
+        .XPos     dw
+        .YPos     dw
+        .OAMFlags db
+        union
+            .Collision
+        nextu
+            .XOffset db
+            .YOffset db
+            .Width   db
+            .Height  db
+        endu
+        .SpriteData dw
+        .OnUpdate   dw
+    endu
+
     ; Parallax Scene
     wParallaxScrollArray:: ds 2 * 8 ; Each scrolling section is a word, and there's 8 sections
     wParallaxScrollIndex:: db       ; Index position in data arrays (i * 2 for words)

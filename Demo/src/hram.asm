@@ -14,7 +14,7 @@ def C8 rb
 def C9 rb
 def CA rb
 def CB rb
-def CC rb ; Keep for H/VBlank
+def CC rb ; Keep for Interrupts
 def CD rb
 def CE rb
 def CF rb
@@ -26,7 +26,7 @@ def W2 rw
 def W3 rw
 def W4 rw
 def W5 rw
-def W6 rw ; Keep for H/VBlank
+def W6 rw ; Keep for Interrupts
 def W7 rw
 
 SECTION "HRAM Labels", HRAM
